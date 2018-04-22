@@ -10,7 +10,6 @@ class Propagation(Model):
         self.data.update(data)
         self.inputs = data['features']
         self.l2 = config.l2
-        self.regularization = config.loss['regKernel']
         self.add_labels = config.add_labels
         self.bias = config.bias
         self.n_node_ids = data['n_node_ids']
@@ -36,10 +35,6 @@ class Propagation(Model):
         self.sparse_inputs = [self.sparse_features] + [False] * (self.n_layers)
         self.dims = [self.input_dims] + config.dims + [self.output_dims]
         self.act = [tf.nn.relu] * (self.n_layers)
-        # self.act = [tf.nn.leaky_relu] * (self.n_layers)
-        # self.act = [tf.nn.elu] * self.n_layers
-        # self.act = [tf.nn.tanh] * self.n_layers
-        # self.act = [lambda x: x] * self.n_layers
         self.act.append(lambda x: x)
 
         self.dropouts = [self.data['dropout_conv']] * (self.n_layers) + [self.data['dropout_out']]
@@ -65,7 +60,6 @@ class Propagation(Model):
 
         self.layers.append(gated_prediction(n_layers=self.n_layers, x_names=self.feature_names, dims=self.dims,
                                             dropout=self.dropouts[-1],
-                                            # dropout=0.,
                                             values=self.values, logging=self.logging,
                                             bias=self.bias))
 

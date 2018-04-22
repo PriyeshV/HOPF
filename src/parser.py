@@ -9,14 +9,14 @@ class Parser(object):  #
         parser = argparse.ArgumentParser()
 
         # Node attribute Aggregator
-        parser.add_argument("--propModel", default='propagation_fusion', help='propagation model names',
+        parser.add_argument("--propModel", default='propagation', help='propagation model names',
                             choices=['propagation', 'propagation_fusion'])
         parser.add_argument("--aggKernel", default='simple', help="kernel names",
                             choices=['kipf', 'simple', 'simple1', 'attention1', 'mul_attention', 'add_attention', 'embmul_attention',
                                      'keyval_attention', 'muladd_attention', 'maxpool', 'mul_attention2', 'mul_attention3'])
         parser.add_argument("--featureless", default=False, help="Non-attributed graphs", type=self.str2bool)
         parser.add_argument("--node_features", default='h', help="x,h")
-        parser.add_argument("--neighbor_features", default='-', help="x,h")
+        parser.add_argument("--neighbor_features", default='h', help="x,h")
         parser.add_argument("--max_depth", default=2, help="Maximum path depth", type=int)
         parser.add_argument("--dims", default='16,16,64,64', help="Dimensions of hidden layers: comma separated")
         parser.add_argument("--skip_connections", default=True, help="output layer added", type=self.str2bool)
@@ -30,7 +30,7 @@ class Parser(object):  #
         parser.add_argument("--drop_features", default=0, help="Range 0-1", type=float, choices=np.round(np.arange(0, 1, 0.1),1))
 
         # Structure pertubation
-        parser.add_argument("--neighbors", default='-1,-1,-1,-1', help="Number of neighbors at each depth; comma separated")
+        parser.add_argument("--neighbors", default='all,all,10,10', help="Number of neighbors at each depth; comma separated")
         parser.add_argument("--drop_edges", default=0., help="Randomly drop edges at each depth", type=float, choices=np.round(np.arange(0, 1, 0.1), 1))
 
         # Dataset Details
@@ -39,7 +39,7 @@ class Parser(object):  #
                                     'ppi_sg', 'blogcatalog', 'genes_fn', 'mlgene', 'ppi_gs', 'reddit', 'reddit_ind'])
         parser.add_argument("--labels", default='labels_random', help="Label Sampling Type")
         parser.add_argument("--percents", default='10', help="Training percent comma separated, ex:5,10,20")
-        parser.add_argument("--folds", default='1,2,3,4,5', help="Training folds comma separated")
+        parser.add_argument("--folds", default='1,2', help="Training folds comma separated")
 
         # NN Hyper parameters
         parser.add_argument("--batch_size", default=128, help="Batch size", type=int)

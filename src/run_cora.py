@@ -7,10 +7,10 @@ from src.tabulate_results import write_results
 from src.utils.utils import *
 import time
 
-machine = 'P__cora_'
+machine = 'F+S_cora_'
 get_results_only = False
 
-switch_gpus = False #For multiple GPUs
+switch_gpus = False  # For multiple GPUs
 default_gpu_id = 0
 n_gpus = 1
 n_parallel_threads = 1
@@ -40,22 +40,23 @@ args['timestamp'] = [timestamp]
 if not get_results_only:
 
     # The names should be the same as argument names in parser.py
-    args['hyper_params'] = args['hyper_params'] + ['dataset', 'batch_size', 'dims', 'max_depth', 'lr', 'l2',
-                                                   'drop_in', 'wce', 'percents', 'folds',
-                                                   'skip_connections', 'dense_connections', 'propModel', 'timestamp']
+    args['hyper_params'] = args['hyper_params'] + ['dataset', 'batch_size', 'dims', 'neighbors', 'max_depth', 'lr', 'l2',
+                                                   'drop_in', 'drop_lr', 'wce', 'percents', 'folds',
+                                                   'skip_connections', 'propModel', 'timestamp']
 
     args['dataset'] = ['cora']
     args['batch_size'] = [128]  # 16
     args['dims'] = ['16,16,16,16,16']
-    args['max_depth'] = [1, 2]  # 1
+    args['neighbors'] = ['all,all,all,all,all']
+    args['max_depth'] = [1, 2, 3, 4, 5]  # 1
     args['lr'] = [1e-2]
     args['l2'] = [1e-3]
     args['drop_in'] = [0.5]
+    args['drop_lr'] = [True]
     args['wce'] = [True]
     args['percents'] = [10]
     args['folds'] =['1,2,3,4,5']
     args['skip_connections'] = [True]
-    args['dense_connections'] = [False]
     args['propModel'] = ['propagation_gated']
 
     pos = args['hyper_params'].index('dataset')
@@ -135,5 +136,3 @@ else:
         print("Done tabulation")
     except:
         print('model not found', name)
-
-

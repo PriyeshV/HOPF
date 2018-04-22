@@ -520,7 +520,7 @@ def main():
         for fold_id, fold in enumerate(config.train_folds):
             print('\n------- Fold: ', fold)
             config.train_fold = fold
-            values, scores = train_model(config)
+            values = train_model(config)
             if config.prop_model_name == 'propagation_gated':
                 np.save(path.join(config.paths['experiment'],
                                   config.dataset_name + '-' + str(fold) + '-' + str(config.max_depth) + '_gating_scores.npy'), scores)
