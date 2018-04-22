@@ -2,16 +2,13 @@ import os
 import time
 import threading
 import numpy as np
+from os import path
 from copy import deepcopy
 from tabulate import tabulate
-from os import path
 
 from src.dataset import Dataset
 from src.parser import Parser
 from src.config import Config
-# from src.models.propagation import Propagation
-# from src.models.propagation_label import Propagation as Propagation_label
-# from src.models.gated_propagation import Propagation
 
 from src.utils.metrics import *
 from src.utils.utils import remove_directory
@@ -165,12 +162,7 @@ class OuterPropagation(object):
             # print(np.shape(shapes))
             # print(shapes[1])
             print(np.shape(shapes))
-        exit()
-        # var, names = [v, v.name for v in tf.trainable_variables()]
-        # grads = tf.gradients(self.model.loss, self.data['embeddings'])
-        # sess.run[grads]
-        # print(names)
-        # sess.run(tf.initialize_local_variables())
+
 
     def get_test_predictions(self, sess):
         data = 'test'
@@ -224,23 +216,6 @@ class OuterPropagation(object):
         _, _, _, total_steps = self.dataset.get_data(data)
         for step in range(total_steps):
             sess.run([self.update_predictions_op])
-
-    def get_scores(self, sess):
-        data = 'all'
-        # Start Running Queue
-        t = threading.Thread(target=self.load_and_enqueue, args=[sess, data])
-        t.daemon = True
-        t.start()
-
-        scores = np.zeros((self.config.n_nodes, self.config.max_depth, self.config.n_labels))
-        _, _, _, total_steps = self.dataset.get_data(data)
-        for step in range(total_steps):
-            t_scores, node_ids = sess.run([self.model.scores, self.data['labeled_ids']])
-            for d in range(self.config.max_depth):
-                scores[node_ids, d] = t_scores[:len(node_ids), d*self.config.n_labels:(d+1)*self.config.n_labels]
-
-        t.join()
-        return scores#np.mean(scores, axis=0), np.std(scores, axis=0)
 
     def run_epoch(self, sess, data, learning_rate, summary_writer=None, epoch_id=0, verbose=1):
         if data == 'train':
@@ -361,7 +336,6 @@ class OuterPropagation(object):
         if epoch_id == self.config.max_inner_epochs:
             best_epoch = epoch_id
             self.saver.save(sess, self.config.paths['ckpt' + suffix] + 'inner-last-best')
-
         return best_epoch, best_tr_metrics,  best_val_metrics
 
     def fit1(self, outer_epoch, sess, summary_writers):
@@ -410,7 +384,6 @@ class OuterPropagation(object):
                                 break
                         else:
                             patience -= 1
-
         return best_epoch, best_tr_metrics,  best_val_metrics
 
     def fit_outer(self, sess, summary_writers):
@@ -457,7 +430,6 @@ class OuterPropagation(object):
 
         self.coord.request_stop()
         self.coord.join(threads)
-
         return epoch_id, tr_metrics, val_metrics, te_metrics
 
     def add_summaries(self, sess):
@@ -517,7 +489,6 @@ def dump_results(config, i_epoch, tr_metrics, val_metrics, te_metrics):
     suffix = '_' + config.train_percent + '_' + config.train_fold
     file_name = config.paths['results'+suffix]+'metrics.txt'
     np.savetxt(file_name, values, header=str(headers), comments='', fmt='%1.5f')
-
     return values
 
 
@@ -526,10 +497,8 @@ def train_model(cfg):
     model, sess = init_model(config)
     summary_writers = model.add_summaries(sess)
     i_epochs, tr_metrics, val_metrics, te_metrics = model.fit_outer(sess, summary_writers)
-    scores = None
-    if config.prop_model_name == 'propagation_gated':
-        scores = model.get_scores(sess)
-    return dump_results(config, i_epochs, tr_metrics, val_metrics, te_metrics), scores
+    return dump_results(config, i_epochs, tr_metrics, val_metrics, te_metrics)
+
 
 def main():
 
@@ -540,7 +509,8 @@ def main():
     start = time.time()
 
     outer_tracking = {}
-    # TODO Loading the data and graph everytime is a total waste
+    # TODO Load data once across all folds
+
     headers = ['O_EPOCH', 'I_EPOCH', 'TR_F1', 'VAL_LOSS', 'VAL_F1', 'k-MICRO-F1', 'k-MACRO-F1', 'MICRO-F1', 'MACRO-F1', 'MC_ACC', 'ML_ACC', 'BAE']
     perc_results = [[]]*len(config.train_percents)
     for perc_id, train_percent in enumerate(config.train_percents):
@@ -578,6 +548,7 @@ def main():
 
     # TODO code inference - Load model and run test
     print('Time taken:', time.time() - start)
+
 
 if __name__ == "__main__":
     main()

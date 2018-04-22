@@ -1,6 +1,8 @@
 from src.utils.metrics import *
 import tensorflow as tf
+from src.utils.inits import glorot
 from src.layers.outer_gating import gated_prediction
+# from src.layers.outer_nogating import gated_prediction
 
 class Model(object):
     def __init__(self, **kwargs):
@@ -35,10 +37,12 @@ class Model(object):
         self.opt_op = None
         self.scores = None
 
-        self.dense = False
         self.n_layers = None
         self.shared_weights = True
         self.act = None
+
+        self.skip_conn = False
+        self.feature_names = ''
 
     def _build(self):
         raise NotImplementedError
@@ -50,26 +54,27 @@ class Model(object):
 
         # Build sequential layer model
         self.data['activations'].append(self.inputs)
-
         for i, layer in enumerate(self.layers):
             if i == 0:
                 hidden, h0 = layer(self.data)
-                h0 = self.act[0](h0)
-                self.data['activations'].append(h0)
+                self.data['activations'].append(self.act[i](h0))
             else:
-                if isinstance(layer, gated_prediction):
-                    hidden, self.scores = layer(self.data)
-                else:
-                    hidden = layer(self.data)
-            self.data['activations'].append(hidden)
+                hidden = layer(self.data)
 
+            # Add skip connections and pass it through and activation layer
+            if i != self.n_layers:
+                if self.skip_conn:  # and i != 0:
+                    hidden += self.data['activations'][-1]
+                hidden = self.act[i](hidden)
+
+            self.data['activations'].append(hidden)
         self.outputs = self.data['activations'][-1]
 
         # Store model variables for easy access
         variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=self.name)
         self.vars = {var.name: var for var in variables}
 
-        # Build metrics
+        # Set loss and gradient clipping
         self._loss()
         self._accuracy()
 

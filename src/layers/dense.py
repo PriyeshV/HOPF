@@ -21,6 +21,7 @@ class Dense(Layer):
 
         with tf.variable_scope(self.name + '_vars'):
             self.vars['weights'] = glorot([input_dim, output_dim], name='weights')
+            self.var_reassign = tf.assign(self.vars['weights'], glorot([input_dim, output_dim], name='weights'))
             if self.bias:
                 self.vars['bias'] = zeros([output_dim], name='bias')
 
@@ -37,12 +38,12 @@ class Dense(Layer):
             x = tf.nn.dropout(x, 1-self.dropout)
 
         # transform
-        output = dot(x, self.vars['weights'], sparse=self.sparse_inputs)
+        h = dot(x, self.vars['weights'], sparse=self.sparse_inputs)
 
         # bias
         if self.bias:
-            output += self.vars['bias']
+            h += self.vars['bias']
 
-        h = self.act(output)
+        # h = self.act(h)
         # h = tf.nn.l2_normalize(h, dim=1)
         return h

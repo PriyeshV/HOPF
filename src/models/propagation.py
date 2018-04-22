@@ -12,6 +12,7 @@ class Propagation(Model):
         self.data.update(data)
         self.inputs = data['features']
         self.l2 = config.l2
+        self.regularization = config.loss['regKernel']
         self.add_labels = config.add_labels
         self.bias = config.bias
         self.n_node_ids = data['n_node_ids']
@@ -34,6 +35,7 @@ class Propagation(Model):
         self.input_dims = config.n_features
         self.output_dims = config.n_labels
 
+        self.sparse_inputs = [self.sparse_features] + [False]*(self.n_layers)
         self.dims = [self.input_dims] + config.dims + [self.output_dims]
         self.act = [tf.nn.relu] * (self.n_layers)
         # self.act = [tf.nn.elu] * self.n_layers
@@ -55,16 +57,10 @@ class Propagation(Model):
     def _build(self):
         # TODO Featureless
         for i in range(self.n_layers):
-            if i == 0:
-                sparse_inputs = self.sparse_features
-                skip_conn = False
-            else:
-                sparse_inputs = False
-                skip_conn = self.skip_conn
             self.layers.append(self.conv_layer(layer_id=i, x_names=self.feature_names, dims=self.dims,
                                                dropout=self.dropouts[i], act=self.act[i], bias=self.bias,
                                                shared_weights=self.shared_weights, nnz_features=self.data['nnz_features'],
-                                               sparse_inputs=sparse_inputs, skip_connection=skip_conn,
+                                               sparse_inputs=self.sparse_inputs[i], skip_connection=self.skip_conn,
                                                add_labels=self.add_labels, logging=self.logging))
         self.layers.append(
             Dense(input_dim=self.dims[-2], output_dim=self.dims[-1], nnz_features=None,
@@ -72,7 +68,7 @@ class Propagation(Model):
                   # dropout=0.,
                   act=self.act[-1],
                   bias=self.bias,
-                  sparse_inputs=False, logging=self.logging))
+                  sparse_inputs=self.sparse_inputs[-1], logging=self.logging))
 
     def predict(self):
         predictions = tf.slice(self.outputs, [0, 0], [self.n_node_ids, self.n_labels])

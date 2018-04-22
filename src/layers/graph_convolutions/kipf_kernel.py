@@ -20,6 +20,9 @@ class Kernel(Kernels_new):
         else:
             data['x'] = data['h']
 
+        if self.add_labels:
+            data['l'] = inputs['labels']
+
         self.node = self.compute_node_features(data, self.weights_node, self.bias_node, inputs['n_conn_nodes'])
         if self.shared_weights:
             self.neighbor = self.compute_neigh_features(data, self.weights_node, self.bias_node, inputs['adjmat'],
@@ -30,15 +33,8 @@ class Kernel(Kernels_new):
 
         self.get_gating_values(inputs['degrees'])
         h = self.combine()
-
-        if self.skip_connetion and self.layer_id > 0:
-            # print('skip happening')
-            # exit()
-            h = h + inputs['activations'][-1]
         if self.bias:
             h += self.vars['bias']
-
-        h = self.act(h)
 
         if self.layer_id == 0:
             return h, self.node

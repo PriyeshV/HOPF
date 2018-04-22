@@ -39,6 +39,7 @@ class Kernels_new(Layer):
             self.input_dims['x'] = dims[0]
         else:
             self.input_dims['x'] = dims[1]
+
         self.input_dims['h'] = dims[layer_id]
         self.input_dims['l'] = dims[-1]
         self.output_dim = dims[layer_id+1]
@@ -82,7 +83,7 @@ class Kernels_new(Layer):
             for key in keys:
                 data = inputs[key]
                 dropout = self.dropout
-                if key == 'l':
+                if key == 'l':  # and self.layer_id == 0:
                     dropout = tf.minimum(self.dropout, 0.)
                     sparse_inputs = False
                 else:

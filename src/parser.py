@@ -9,8 +9,8 @@ class Parser(object):  #
         parser = argparse.ArgumentParser()
 
         # Node attribute Aggregator
-        parser.add_argument("--propModel", default='propagation_gated', help='propagation model names',
-                            choices=['propagation', 'propagation_gated'])
+        parser.add_argument("--propModel", default='propagation_fusion', help='propagation model names',
+                            choices=['propagation', 'propagation_fusion'])
         parser.add_argument("--aggKernel", default='simple', help="kernel names",
                             choices=['kipf', 'simple', 'simple1', 'attention1', 'mul_attention', 'add_attention', 'embmul_attention',
                                      'keyval_attention', 'muladd_attention', 'maxpool', 'mul_attention2', 'mul_attention3'])

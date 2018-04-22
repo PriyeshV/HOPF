@@ -22,21 +22,16 @@ class Kernel(Kernels_new):
 
         self.node = self.compute_node_features(data, self.weights_node, self.bias_node, inputs['n_conn_nodes'])
         if self.shared_weights:
-            self.neighbor = self.compute_neigh_features(data, self.weights_node, self.bias_node, inputs['adjmat'],
+            self.neighbor, self.h_node = self.compute_neigh_features(data, self.weights_node, self.bias_node, inputs['adjmat'],
                                                         inputs['degrees'], inputs['n_conn_nodes'])
         else:
-            self.neighbor = self.compute_neigh_features(data, self.weights_neigh, self.bias_neigh, inputs['adjmat'],
+            self.neighbor, self.h_node = self.compute_neigh_features(data, self.weights_neigh, self.bias_neigh, inputs['adjmat'],
                                                         inputs['degrees'], inputs['n_conn_nodes'])
 
         self.get_gating_values(inputs['degrees'])
         h = self.combine()
-
-        if self.skip_connetion and self.layer_id > 0:
-            h = h + inputs['activations'][-1]
         if self.bias:
             h += self.vars['bias']
-
-        h = self.act(h)
 
         if self.layer_id == 0:
             return h, self.node
@@ -53,7 +48,7 @@ class Kernel(Kernels_new):
             h = self.compute_features(data, weights, bias, self.neighbor_features, n_nodes)
         weights = self.combine_neighbor_info(adjmat, degrees, n_nodes)
         neighbors = tf.sparse_tensor_dense_matmul(weights, h)
-        return neighbors
+        return neighbors, h
 
     def combine_neighbor_info(self, adjmat, degrees, n_nodes):
         weights = self.get_laplacian(adjmat, degrees)

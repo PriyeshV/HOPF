@@ -53,17 +53,23 @@ class Config(object):
 
         # Propogation Depth
         self.max_depth = args.max_depth
+        if self.max_depth == 0:
+            sys.exit('Error: Invalid value. Supported range > 0  \n For 0th hop, set neighbor_features=- and self.max_depth=k for k layer deep FFN')
 
         # Drop nodes or edges
         self.drop_edges = args.drop_edges
 
         # Subset of neighbors to consider at max
-        self.neighbors = np.array(args.neighbors.split(','), dtype=int)
+        self.neighbors = args.neighbors.split(',')
+        for i in range(len(self.neighbors)):
+            if self.neighbors[i] == 'all':
+                self.neighbors[i] = '-1'
+        self.neighbors = np.asarray(self.neighbors, dtype=int)
         if self.neighbors.shape[0] < args.max_depth:
-            #Extend as -1 is no information provided, i.e take all neighbors at that depth
+            # Extend as -1 is no information provided, i.e take all neighbors at that depth
             diff = args.max_depth - self.neighbors.shape[0]
-            self.neighbors = np.hstack((self.neighbors, [-1]*diff))
-            #sys.exit('Neighbors argument should match max depth: ex: -1,1 or -1, 32')
+            self.neighbors = np.hstack((self.neighbors, [-1] * diff))
+            # sys.exit('Neighbors argument should match max depth: ex: -1,1 or -1, 32')
 
         if args.drop_edges != 0 and self.neighbors[0] != -1:
             sys.exit('Can not have drop edges and neighbors flag set at the same time')

@@ -2,7 +2,6 @@ from src.models.model import Model
 from src.utils.metrics import *
 from src.layers.outer_gating import gated_prediction
 
-
 class Propagation(Model):
 
     def __init__(self, config, data,  **kwargs):
@@ -11,6 +10,7 @@ class Propagation(Model):
         self.data.update(data)
         self.inputs = data['features']
         self.l2 = config.l2
+        self.regularization = config.loss['regKernel']
         self.add_labels = config.add_labels
         self.bias = config.bias
         self.n_node_ids = data['n_node_ids']
@@ -33,8 +33,10 @@ class Propagation(Model):
         self.input_dims = config.n_features
         self.output_dims = config.n_labels
 
+        self.sparse_inputs = [self.sparse_features] + [False] * (self.n_layers)
         self.dims = [self.input_dims] + config.dims + [self.output_dims]
         self.act = [tf.nn.relu] * (self.n_layers)
+        # self.act = [tf.nn.leaky_relu] * (self.n_layers)
         # self.act = [tf.nn.elu] * self.n_layers
         # self.act = [tf.nn.tanh] * self.n_layers
         # self.act = [lambda x: x] * self.n_layers
@@ -55,21 +57,15 @@ class Propagation(Model):
     def _build(self):
         # TODO Featureless
         for i in range(self.n_layers):
-            if i == 0:
-                sparse_inputs = self.sparse_features
-                skip_conn = False
-            else:
-                sparse_inputs = False
-                skip_conn = self.skip_conn
             self.layers.append(self.conv_layer(layer_id=i, x_names=self.feature_names, dims=self.dims,
                                                dropout=self.dropouts[i], act=self.act[i], bias=self.bias,
                                                shared_weights=self.shared_weights, nnz_features=self.data['nnz_features'],
-                                               sparse_inputs=sparse_inputs, skip_connection=skip_conn,
+                                               sparse_inputs=self.sparse_inputs[i], skip_connection=self.skip_conn,
                                                add_labels=self.add_labels, logging=self.logging))
 
         self.layers.append(gated_prediction(n_layers=self.n_layers, x_names=self.feature_names, dims=self.dims,
-                                            # dropout=self.dropouts[-1],
-                                            dropout=0.,
+                                            dropout=self.dropouts[-1],
+                                            # dropout=0.,
                                             values=self.values, logging=self.logging,
                                             bias=self.bias))
 
@@ -98,10 +94,11 @@ class Propagation(Model):
 
         # L2 Loss
         for v in tf.trainable_variables():
-            if not 'bias' in v.name:
+            reject_cands = ['bias']
+            # sub_names = v.name.split("/")
+            if v.name not in reject_cands:  # and sub_names[2][:7] not in ['weights']:
                 self.loss += self.l2 * tf.nn.l2_loss(v)
         self.loss *= self.density
-
         tf.summary.scalar('loss', self.loss)
 
     def _accuracy(self):

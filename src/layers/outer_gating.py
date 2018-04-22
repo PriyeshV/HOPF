@@ -30,7 +30,7 @@ class gated_prediction(Layer):
         for i in range(self.start_h, self.n_layers):
             data = tf.nn.dropout(inputs['activations'][i+1], 1 - self.dropout)
             outputs.append(tf.matmul(data, self.vars['weights_'+str(i)]))
-        gate_input = tf.concat(outputs, axis=1)
+
         outputs = tf.squeeze(tf.reduce_sum(outputs, axis=0))
-        return outputs, gate_input
+        return outputs
 
