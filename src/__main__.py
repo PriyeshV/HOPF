@@ -269,6 +269,7 @@ class OuterPropagation(object):
         lr = self.config.learning_rate
         suffix = '_' + self.config.train_percent + '_' + self.config.train_fold
 
+        best_epoch = 0
         epoch_id = 0
         bad_step_id = 0
         min_run_over = False
@@ -282,6 +283,7 @@ class OuterPropagation(object):
                 val_metrics = self.run_epoch(sess, 'val', 0, summary_writers['val'], epoch_id=epoch_id)
                 val_loss = val_metrics['loss']
                 tot_val.append(val_loss)
+                # print(epoch_id, self.config.val_epochs_freq)
 
                 if epoch_id % 10 == 0:
                     print(outer_epoch, epoch_id, val_loss, tr_metrics['micro_f1'], val_metrics['micro_f1'], val_metrics['bae'], patience, round(time.time() - t_test, 5))
@@ -299,18 +301,21 @@ class OuterPropagation(object):
                     continue
 
                 if check_for_stop:
-                    diff = epoch_id - bad_step_id
-                    if diff == int(patience/2) or diff == patience:
-                        curr_mean = np.mean(tot_val[-int(patience/2)])
-                        if diff == int(patience/2):
-                            # print('Initating Early stopping')
-                            if curr_mean > best_mean_loss and val_loss > best_loss:
-                                lr = round(lr / 2, 4)
-                                self.saver.restore(sess, self.config.paths['ckpt' + suffix] + 'inner-last-best')
-                        else:
-                            if curr_mean > best_mean_loss and val_loss > best_loss:
-                                self.saver.restore(sess, self.config.paths['ckpt' + suffix] + 'inner-last-best')
-                                break
+                    if self.config.drop_lr:
+                        diff = epoch_id - bad_step_id
+                        if diff == int(patience/2) or diff == patience:
+                            curr_mean = np.mean(tot_val[-int(patience/2)])
+                            if diff == int(patience/2):
+                                # print('Initating Early stopping')
+                                if curr_mean > best_mean_loss and val_loss > best_loss:
+                                    lr = round(lr / 2, 4)
+                                    self.saver.restore(sess, self.config.paths['ckpt' + suffix] + 'inner-last-best')
+                            else:
+                                if curr_mean >= best_mean_loss and val_loss >= best_loss:
+                                    self.saver.restore(sess, self.config.paths['ckpt' + suffix] + 'inner-last-best')
+                                    break
+                    else:
+                        break
 
                 if min_run_over and epoch_id % patience == 0:
                     curr_mean = np.mean(tot_val[-patience])
@@ -336,6 +341,7 @@ class OuterPropagation(object):
         if epoch_id == self.config.max_inner_epochs:
             best_epoch = epoch_id
             self.saver.save(sess, self.config.paths['ckpt' + suffix] + 'inner-last-best')
+
         return best_epoch, best_tr_metrics,  best_val_metrics
 
     def fit1(self, outer_epoch, sess, summary_writers):
