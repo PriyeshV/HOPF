@@ -5,6 +5,7 @@ from src.layers.outer_gating import gated_prediction
 class Propagation(Model):
 
     def __init__(self, config, data,  **kwargs):
+        kwargs['name'] = 'fusion'
         super(Propagation, self).__init__(**kwargs)
 
         self.data.update(data)
@@ -37,7 +38,8 @@ class Propagation(Model):
         self.act = [tf.nn.relu] * (self.n_layers)
         self.act.append(lambda x: x)
 
-        self.dropouts = [self.data['dropout_conv']] * (self.n_layers) + [self.data['dropout_out']]
+        self.dropouts = [self.data['dropout_conv']] * (self.n_layers)
+        self.drop_fuse = self.data['dropout_out']
 
         self.optimizer = config.opt(learning_rate=data['lr'])
         self.density = data['batch_density']
@@ -56,12 +58,10 @@ class Propagation(Model):
                                                dropout=self.dropouts[i], act=self.act[i], bias=self.bias,
                                                shared_weights=self.shared_weights, nnz_features=self.data['nnz_features'],
                                                sparse_inputs=self.sparse_inputs[i], skip_connection=self.skip_conn,
-                                               add_labels=self.add_labels, logging=self.logging))
+                                               add_labels=self.add_labels, logging=self.logging, model_name=self.name))
 
         self.layers.append(gated_prediction(n_layers=self.n_layers, x_names=self.feature_names, dims=self.dims,
-                                            dropout=self.dropouts[-1],
-                                            values=self.values, logging=self.logging,
-                                            bias=self.bias))
+                                            dropout=self.drop_fuse, bias=self.bias, logging=self.logging, model_name=self.name))
 
     def predict(self):
         predictions = tf.slice(self.outputs, [0, 0], [self.n_node_ids, self.n_labels])

@@ -5,6 +5,7 @@ from os import path
 from src.utils import utils
 import numpy as np
 import importlib
+import os
 
 
 class Config(object):
@@ -13,6 +14,7 @@ class Config(object):
         # SET UP PATHS
         self.paths = dict()
         self.paths['root'] = '../'
+        # self.paths['root'] = ''
 
         self.paths['datasets'] = path.join(self.paths['root'], 'Datasets')
         self.paths['experiments'] = path.join(self.paths['root'], 'Experiments')
@@ -101,7 +103,7 @@ class Config(object):
         # self.drop_out = args.drop_out
         # self.drop_conv = args.drop_conv
         self.drop_conv = self.drop_in
-        self.drop_out = self.drop_conv
+        self.drop_out = args.drop_out
 
         # Data pertubation
         self.drop_features = args.drop_features
@@ -122,6 +124,7 @@ class Config(object):
         # early stopping hyper parametrs
         self.patience = args.pat  # look as this many epochs regardless
         self.learning_rate = args.lr
+        self.drop_lr = args.drop_lr
 
         # optimizer
         self.l2 = args.l2

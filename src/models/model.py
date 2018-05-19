@@ -55,7 +55,8 @@ class Model(object):
         # Build sequential layer model
         self.data['activations'].append(self.inputs)
         for i, layer in enumerate(self.layers):
-            if i == 0:
+            print(i, layer)
+            if i == 0 and (self.name != 'fusiond'):
                 hidden, h0 = layer(self.data)
                 self.data['activations'].append(self.act[i](h0))
             else:
@@ -63,7 +64,8 @@ class Model(object):
 
             # Add skip connections and pass it through and activation layer
             if i != self.n_layers:
-                if self.skip_conn:  # and i != 0:
+                if self.skip_conn and (self.name in ['fusion', 'fusiond'] and i != 0):
+                    print(i, layer)
                     hidden += self.data['activations'][-1]
                 hidden = self.act[i](hidden)
 
@@ -83,7 +85,6 @@ class Model(object):
                                   for grad, var in grads_and_vars]
         self.grad, _ = clipped_grads_and_vars[0]
         self.opt_op = self.optimizer.apply_gradients(clipped_grads_and_vars)
-
         # self.opt_op = self.optimizer.minimize(self.loss)
 
     def predict(self):

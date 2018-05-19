@@ -49,7 +49,6 @@ class Propagation(Model):
         self.build()
         self.predictions = self.predict()
 
-
     def _build(self):
         # TODO Featureless
         for i in range(self.n_layers):

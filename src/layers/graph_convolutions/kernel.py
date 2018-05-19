@@ -35,7 +35,7 @@ class Kernels_new(Layer):
         # Weights initialization
         self.input_dims = {}
         # Initially 'x' and 'h' save same input
-        if self.layer_id == 0:
+        if self.layer_id == 0 and self.m_name != '':
             self.input_dims['x'] = dims[0]
         else:
             self.input_dims['x'] = dims[1]

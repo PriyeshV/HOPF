@@ -20,7 +20,7 @@ n_parallel_threads = 8
 # LOOP over this entire framework
 param_keys = ['aggKernel', 'node_features', 'neighbor_features', 'shared_weights', 'max_outer']
 model_params = [[]]*1
-model_params[0] = ['simple', 'x', 'h', '0', '1']
+model_params[0] = ['kipf', 'h', 'h', '1', '1']
 
 # Set Hyper-parameters
 args = dict()
@@ -50,19 +50,24 @@ for model_id in range(len(model_params)):
         #                                                'drop_in', 'drop_out', 'drop_conv',
         #                                                'wce']
         args['hyper_params'] = args['hyper_params'] + ['dataset', 'batch_size', 'dims', 'max_depth', 'lr', 'l2',
-                                                       'drop_in', 'wce', 'percents', 'folds',
+                                                       'drop_in', 'drop_out', 'wce', 'percents', 'folds',
                                                        'skip_connections', 'propModel']
 
-        args['dataset'] = ['mlgene']
+        args['dataset'] = ['cora']
         args['wce'] = [True]
-        args['propModel'] = ['propagation_label']
-        args['skip_connections'] = [False]
+        args['propModel'] = ['propagation_fusion']
+        args['skip_connections'] = [True]
+        # args['batch_size'] = [128, 256, -1]  # 16
         args['batch_size'] = [128]  # 16
-        args['dims'] = ['16,16', '64,64', '128,128']
-        args['max_depth'] = [2]  # 1
+        # args['dims'] = ['16,16', '64,64', '128,128']
+        args['dims'] = ['64,64']
+        args['max_depth'] = [2, 3, 4, 5]  # 1
         args['lr'] = [1e-2]
-        args['l2'] = [1e-1, 1e-3, 1e-6]
-        args['drop_in'] = [0.1, 0.25, 0.5]
+        # args['l2'] = [1e-1, 1e-3, 1e-6]
+        args['l2'] = [1e-3]
+        # args['drop_in'] = [0.1, 0.25, 0.5]
+        args['drop_in'] = [0.5]
+        args['drop_out'] = [0.1, 0.25, 0.5]
         args['percents'] = [10]
         args['folds'] = ['1,2,3,4,5']
 

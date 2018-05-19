@@ -64,48 +64,17 @@ class Dataset:
         # nodes are list of positions and not mask
         if self.config.max_depth == 0:
             return nodes
-        b_size = len(nodes)
-        nodes = [nodes]
 
-        A = self.adjmat[nodes[0], :]  # [B*N]
-        for i in range(self.config.max_depth):
-            if self.config.drop_edges > 0  and self.config.drop_edges < 1:
-                (rows, cols, data) = sp.find(A)
-                n_edges = len(data)
-                rand_ids = np.random.permutation(range(n_edges))
-                n_preserve = n_edges - int(self.config.drop_edges * n_edges)
-                rows = rows[rand_ids[:n_preserve]]
-                cols = cols[rand_ids[:n_preserve]]
-                data = data[rand_ids[:n_preserve]]
-                A = sp.coo_matrix((data, (rows, cols)), shape=(b_size, self.config.n_nodes)).tocsr()
-            elif self.config.neighbors[i] != -1:
-                indices = np.array([])
-                indptr = np.array([0])
-                data = np.array([])
-                max_degree = 0
-                for k in range(b_size):
-                    row_start = A.indptr[k]
-                    row_end = A.indptr[k + 1]
-                    degree = row_end - row_start
-                    if degree > self.config.neighbors[i]:
-                        degree = self.config.neighbors[i]
-                        # t_data = A.data[row_start:row_end]
-                        # data = np.append(data, t_data[pos])
-                        data = np.append(data, np.ones(degree))
-                        t_ind = A.indices[row_start:row_end]
-                        pos = np.random.choice(range(len(t_ind)), degree)
-                        indices = np.append(indices, t_ind[pos])
-                    else:
-                        data = np.append(data, np.ones(degree))
-                        indices = np.append(indices, A.indices[row_start:row_end])
-                    indptr = np.append(indptr, degree + indptr[-1])
-                A = sp.csr_matrix((data, indices, indptr), shape=A.shape)
-            nodes.append(A.indices)
-            if i+1 != self.config.max_depth:
-                A = A.dot(self.adjmat)
+        neighbors = set(nodes)
+        neigh_last = set(neighbors)
+        for _ in range(self.config.max_depth):
+            new_k = set()
+            for n in neigh_last:
+                new_k.update(self.adjlist[n])
+            neigh_last = new_k - neighbors
+            neighbors.update(neigh_last)
 
-        nodes = np.hstack([nodes[0], np.setdiff1d(np.unique(np.hstack(nodes[1:])), nodes[0])])
-        return nodes
+        return np.append(nodes, np.asarray(list(neighbors-set(nodes)), dtype=int))
 
     def load_data(self, config):
 
@@ -166,6 +135,7 @@ class Dataset:
         graph = nx.from_scipy_sparse_matrix(adjmat)
         # Makes it undirected graph it CSR format
         adjmat = nx.adjacency_matrix(graph)
+        self.adjlist = graph.adjacency_list()
 
         # .indices attribute should only be used on row slices
         if not isinstance(adjmat, sp.csr_matrix):

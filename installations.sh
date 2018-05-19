@@ -15,8 +15,8 @@ sudo make altinstall
 
 cd ~
 mkdir Virtualenvs
-python3.5 -m venv Virtualenvs/tf-1.3
-source Virtualenvs/tf-1.3/bin/activate
+python3.5 -m venv Virtualenvs/tf-1.3-nx0.19
+source Virtualenvs/tf-1.3-nx0.19/bin/activate
 pip install --upgrade pip
 pip install numpy
 pip install pillow

@@ -34,14 +34,20 @@ class Layer(object):
     """
 
     def __init__(self, **kwargs):
-        allowed_kwargs = {'name', 'logging'}
+        allowed_kwargs = {'model_name', 'name', 'logging'}
         for kwarg in kwargs.keys():
             assert kwarg in allowed_kwargs, 'Invalid keyword argument: ' + kwarg
         name = kwargs.get('name')
+        m_name = kwargs.get('model_name')
+
         if not name:
             layer = self.__class__.__name__.lower()
             name = layer + '_' + str(get_layer_uid(layer))
+        if not m_name:
+            m_name = ''
+
         self.name = name
+        self.m_name = m_name
         self.vars = {}
         logging = kwargs.get('logging', False)
         self.logging = logging

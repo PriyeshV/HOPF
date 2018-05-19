@@ -1,0 +1,7 @@
+nodes: 1240
+edges: 1674
+connected components: 259
+max degree: 27.0
+min degree: 0.0
+mean degree: 2.65080645161
+singleton nodes: 150

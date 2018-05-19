@@ -163,9 +163,8 @@ class OuterPropagation(object):
             # print(shapes[1])
             print(np.shape(shapes))
 
+    def get_predictions(self, sess, data='test'):
 
-    def get_test_predictions(self, sess):
-        data = 'test'
         # Start Running Queue
         t = threading.Thread(target=self.load_and_enqueue, args=[sess, data])
         t.daemon = True
@@ -192,8 +191,7 @@ class OuterPropagation(object):
             metrics['k_macro_f1'] += te_metrics['macro_f1'] * contrib_ratio
         return metrics
 
-    def update_global_predictions_truth(self, sess):
-        data = 'train'
+    def update_global_predictions_truth(self, sess, data='train'):
         # Start Running Queue
         t = threading.Thread(target=self.load_and_enqueue, args=[sess, data])
         t.daemon = True
@@ -217,7 +215,7 @@ class OuterPropagation(object):
         for step in range(total_steps):
             sess.run([self.update_predictions_op])
 
-    def run_epoch(self, sess, data, learning_rate, summary_writer=None, epoch_id=0, verbose=1):
+    def run_epoch(self, sess, data, learning_rate, summary_writer=None, epoch_id=0, outer_id=0, verbose=1):
         if data == 'train':
             train_op = self.model.opt_op
             feed_dict = {self.placeholders['dropout_in']: self.config.drop_in,
@@ -278,7 +276,7 @@ class OuterPropagation(object):
 
         for epoch_id in range(self.config.max_inner_epochs):
             t_test = time.time()
-            tr_metrics = self.run_epoch(sess, 'train', lr, summary_writers['train'], epoch_id=epoch_id)
+            tr_metrics = self.run_epoch(sess, 'train', lr, summary_writers['train'], epoch_id=epoch_id, outer_id=0)
             if epoch_id % self.config.val_epochs_freq == 0 or epoch_id % patience == 0 or epoch_id % int(patience/2) == 0:
                 val_metrics = self.run_epoch(sess, 'val', 0, summary_writers['val'], epoch_id=epoch_id)
                 val_loss = val_metrics['loss']
@@ -344,54 +342,6 @@ class OuterPropagation(object):
 
         return best_epoch, best_tr_metrics,  best_val_metrics
 
-    def fit1(self, outer_epoch, sess, summary_writers):
-        suffix = '_' + self.config.train_percent + '_' + self.config.train_fold
-        patience = max(self.config.patience, self.config.save_epochs_after)
-        best_mean_loss = 1e6
-        best_loss = 1e6
-        best_tr_metrics = None
-        best_val_metrics = None
-        window = 10 #TODO: take note of this
-
-        lr = self.config.learning_rate
-
-        best_val_loss = 9999
-        tot_val = []
-
-        for epoch_id in range(self.config.max_inner_epochs):
-            t_test = time.time()
-            tr_metrics = self.run_epoch(sess, 'train', lr, summary_writers['train'], epoch_id=epoch_id)
-            if epoch_id % self.config.val_epochs_freq == 0:
-                val_metrics = self.run_epoch(sess, 'val', 0, summary_writers['val'], epoch_id=epoch_id)
-                val_loss = val_metrics['loss']
-                tot_val.append(val_loss)
-
-                if epoch_id % 10 == 0:
-                    print(outer_epoch, epoch_id, val_loss, tr_metrics['micro_f1'], val_metrics['micro_f1'], val_metrics['bae'], patience, round(time.time() - t_test, 5))
-
-                if len(tot_val) > window:
-                    if val_loss <= np.mean(tot_val[-window]): #can't use 'patience' instead of 'window', because patience keeps decreasing
-                    # if val_loss < best_val_loss: # Alternate method, but this might fail if there is sub-optimal local kink of good performance
-                        patience = self.config.patience
-                        best_epoch = epoch_id
-                        best_tr_metrics = tr_metrics
-                        best_val_metrics = val_metrics
-                        self.saver.save(sess, self.config.paths['ckpt' + suffix] + 'inner-last-best')
-                        # best_val_loss = val_loss
-                    else:
-                        if patience < 1:
-                            # Restore the best parameters
-                            self.saver.restore(sess, self.config.paths['ckpt' + suffix] + 'inner-last-best')
-                            patience = self.config.patience
-                            lr /= 10
-                            # print('Learning rate dropped to %.8f' % learning_rate)
-                            if lr <= 0.000001:
-                                # print('Stopping by patience method')
-                                break
-                        else:
-                            patience -= 1
-        return best_epoch, best_tr_metrics,  best_val_metrics
-
     def fit_outer(self, sess, summary_writers):
         max_o_epochs = self.config.max_outer_epochs
         max_o_epochs += 2 if max_o_epochs > 1 else 1
@@ -403,15 +353,24 @@ class OuterPropagation(object):
         with sess.as_default():
             # self.test(sess)
             for id in range(max_o_epochs-1):
-                epoch_id[id], tr_metrics[id], val_metrics[id] = self.fit(id, sess, summary_writers)
+                if True or id <= 1:
+                    epoch_id[id], tr_metrics[id], val_metrics[id] = self.fit(id, sess, summary_writers)
+                else:
+                    epoch_id[id] = epoch_id[1]
+                    tr_metrics[id] = tr_metrics[1]
+                    val_metrics[id] = val_metrics[1]
                 if id == 0:
-                    te_metrics[id] = self.get_test_predictions(sess)
+                    te_metrics[id] = self.get_predictions(sess, data='test')
                     if self.config.max_outer_epochs > 1:
                         self.update_global_predictions(sess)
+                        self.update_global_predictions_truth(sess, data='train')
+                        # variable reset
+                        sess.run(self.model.layers[-1].var_reassign)
                 else:
-                    self.update_global_predictions_truth(sess)
-                    te_metrics[id] = self.get_test_predictions(sess)
+                    te_metrics[id] = self.get_predictions(sess, data='test')
+
                     self.update_global_predictions(sess)
+                    self.update_global_predictions_truth(sess, data='train')
                     sess.run(self.increment_oe)
 
                 # mean_scores, std_scores = self.get_scores(sess)
