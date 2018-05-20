@@ -69,9 +69,9 @@ class Config(object):
         self.neighbors = np.asarray(self.neighbors, dtype=int)
         if self.neighbors.shape[0] < args.max_depth:
             # Extend as -1 is no information provided, i.e take all neighbors at that depth
-            diff = args.max_depth - self.neighbors.shape[0]
-            self.neighbors = np.hstack((self.neighbors, [-1] * diff))
-            # sys.exit('Neighbors argument should match max depth: ex: -1,1 or -1, 32')
+            # diff = args.max_depth - self.neighbors.shape[0]
+            # self.neighbors = np.hstack((self.neighbors, [-1] * diff))
+            sys.exit('Neighbors argument should match max depth: ex: all,1')
 
         if args.drop_edges != 0 and self.neighbors[0] != -1:
             sys.exit('Can not have drop edges and neighbors flag set at the same time')

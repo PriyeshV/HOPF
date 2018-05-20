@@ -1,6 +1,7 @@
 from src.utils.utils import *
 import tensorflow as tf
 import time
+import random
 
 # TODO We should move all numpy data to TF data with device set to CPU
 # Should we remove edges to unlabeled nodes ? That will improve performance
@@ -67,10 +68,14 @@ class Dataset:
 
         neighbors = set(nodes)
         neigh_last = set(neighbors)
-        for _ in range(self.config.max_depth):
+        for h in range(self.config.max_depth):
             new_k = set()
             for n in neigh_last:
-                new_k.update(self.adjlist[n])
+                if self.degrees[n] > 0:
+                    if self.config.neighbors[h] != -1:
+                        new_k.update(random.sample(self.adjlist[n], min(self.degrees[n][0], self.config.neighbors[h])))
+                    else:
+                        new_k.update(self.adjlist[n])
             neigh_last = new_k - neighbors
             neighbors.update(neigh_last)
 
@@ -160,7 +165,6 @@ class Dataset:
 
     def batch_generator(self, data='train', shuffle=True):
 
-
         nodes, n_nodes, batch_size, n_batches = self.get_data(data)
         if shuffle:
             nodes = np.random.permutation(nodes)
@@ -179,12 +183,12 @@ class Dataset:
             n_conn_nodes = connected_nodes.shape[0]
 
             adjmat = self.adjmat[connected_nodes, :].tocsc()[:, connected_nodes]
-            if self.config.neighbors[0] != -1:
-                degrees = adjmat.sum(axis=0)
-                degrees = np.squeeze(np.asarray(degrees))
-            else:
+            if all(x == -1 for x in self.config.neighbors):
                 degrees = self.degrees[connected_nodes]
                 degrees = np.squeeze(degrees)
+            else:
+                degrees = adjmat.sum(axis=0)
+                degrees = np.squeeze(np.asarray(degrees))
 
             adjmat = adjmat.tocoo()
             a_indices = np.mat([adjmat.row, adjmat.col]).transpose()
