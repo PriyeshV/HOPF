@@ -62,7 +62,7 @@ class Model(object):
             # Add skip connections and pass it through and activation layer
             if i != self.n_layers:
                 if self.skip_conn and self.name not in ['krylov', 'cheby']:
-                    if i != 0:  # or True
+                    if i != 0 or self.name == 'fusion':  # or True
                         print('Hop Skip connection| From: ', i, ' To: ', i+1, layer)
                         hidden += self.data['activations'][-1]
                 hidden = self.act[i](hidden)
