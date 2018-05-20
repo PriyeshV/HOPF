@@ -5,7 +5,7 @@ from src.utils.inits import glorot
 
 class Fusion(Layer):
 
-    def __init__(self, n_layers, x_names, input_dim, output_dim, dropout, bias, act=lambda x:x, **kwargs):
+    def __init__(self, n_layers, x_names, input_dim, output_dim, dropout, bias, act=lambda x: x, **kwargs):
         super(Fusion, self).__init__(**kwargs)
 
         self.n_layers = n_layers + 1

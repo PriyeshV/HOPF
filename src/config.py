@@ -144,6 +144,7 @@ class Config(object):
         self.kernel_class = getattr(importlib.import_module("src.layers.graph_convolutions."+args.aggKernel+"_kernel"), "Kernel")
         self.prop_class = getattr(importlib.import_module("src.models."+args.propModel), "Propagation")
         self.prop_model_name = args.propModel
+        self.kernel_name = args.aggKernel
 
         # Sparse Feature settings
         self.sparse_features = args.sparse_features

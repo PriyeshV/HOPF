@@ -53,7 +53,7 @@ class Model(object):
         self.data['activations'].append(self.inputs)
         for i, layer in enumerate(self.layers):
             print('Layer ', i, ' : ', layer)
-            if i == 0 and (self.name != 'krylov'):
+            if i == 0 and (self.name not in ['krylov', 'cheby']):
                 hidden, h0 = layer(self.data)
                 self.data['activations'].append(self.act[i](h0))
             else:
@@ -61,7 +61,7 @@ class Model(object):
 
             # Add skip connections and pass it through and activation layer
             if i != self.n_layers:
-                if self.skip_conn and self.name != 'krylov':
+                if self.skip_conn and self.name not in ['krylov', 'cheby']:
                     if i != 0:  # or True
                         print('Hop Skip connection| From: ', i, ' To: ', i+1, layer)
                         hidden += self.data['activations'][-1]

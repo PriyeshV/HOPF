@@ -183,6 +183,9 @@ class Dataset:
             n_conn_nodes = connected_nodes.shape[0]
 
             adjmat = self.adjmat[connected_nodes, :].tocsc()[:, connected_nodes]
+            if self.config.kernel_name == 'chebyshev':
+                adjmat = get_scaled_laplacian(adjmat)
+
             if all(x == -1 for x in self.config.neighbors):
                 degrees = self.degrees[connected_nodes]
                 degrees = np.squeeze(degrees)

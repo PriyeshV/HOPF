@@ -12,6 +12,7 @@ from src.config import Config
 
 from src.utils.metrics import *
 from src.utils.utils import remove_directory
+from src.utils.utils import get_tf_normalize_adj, get_tf_unnormalize_adj
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
@@ -74,7 +75,14 @@ class OuterPropagation(object):
             data['features'] = tf.SparseTensorValue(f_indices, f_data, f_shape)
         else:
             data['features'] = f_data
-        data['adjmat'] = tf.SparseTensor(indices=adj_indices, values=adj_data, dense_shape=adj_shape)
+        adjmat = tf.SparseTensor(indices=adj_indices, values=adj_data, dense_shape=adj_shape)
+
+        if self.config.kernel_name == 'simple':
+            adjmat = get_tf_unnormalize_adj(adjmat, data['degrees'])
+        elif self.config.kernel_name == 'kipf':
+            adjmat = get_tf_normalize_adj(adjmat, data['degrees'])
+
+        data['adjmat'] = adjmat
 
         data['dropout_in'] = self.placeholders['dropout_in']
         data['dropout_out'] = self.placeholders['dropout_out']

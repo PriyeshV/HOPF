@@ -9,7 +9,7 @@ from src.tabulate_results import write_results
 from src.utils.utils import *
 import time
 
-machine = 'fusiond_'
+machine = 'coramulti_'
 get_results_only = False
 
 switch_gpus = True #For multiple GPUs
@@ -50,27 +50,29 @@ for model_id in range(len(model_params)):
         #                                                'drop_in', 'drop_out', 'drop_conv',
         #                                                'wce']
         args['hyper_params'] = args['hyper_params'] + ['dataset', 'batch_size', 'dims', 'max_depth', 'lr', 'l2',
-                                                       'drop_in', 'drop_out', 'wce', 'percents', 'folds',
-                                                       'skip_connections', 'propModel']
+                                                       'drop_in', 'wce', 'percents', 'folds',
+                                                       'skip_connections',
+                                                       # 'drop_out',
+                                                       'propModel']
 
-        args['dataset'] = ['cora']
+        args['dataset'] = ['cora_multi']
         args['wce'] = [True]
-        args['propModel'] = ['propagation_fusiond']
+        args['propModel'] = ['propagation_krylov1']
         args['skip_connections'] = [False]
-        args['batch_size'] = [128, 256, -1]  # 16
+        args['batch_size'] = [64, 128]  # 16
         # args['batch_size'] = [128]  # 16
         # args['dims'] = ['16,16,16', '64,64,64', '128,128,128']
         args['dims'] = ['64,64,64']
         # args['max_depth'] = [2, 3, 4, 5]  # 1
-        args['max_depth'] = [3]
+        args['max_depth'] = [2]
         args['lr'] = [1e-2,  1e-3]
         args['l2'] = [1e-1, 1e-3, 1e-6]
         # args['l2'] = [1e-3]
         args['drop_in'] = [0.1, 0.25, 0.5]
         # args['drop_in'] = [0.5]
-        args['drop_out'] = [0.1, 0.25, 0.5]
+        # args['drop_out'] = [0.1, 0.25, 0.5]
         args['percents'] = [10]
-        args['folds'] = ['1,2,3,4,5']
+        args['folds'] = ['1']
 
         pos = args['hyper_params'].index('dataset')
         args['hyper_params'][0], args['hyper_params'][pos] = args['hyper_params'][pos], args['hyper_params'][0]

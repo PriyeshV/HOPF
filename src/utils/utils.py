@@ -4,6 +4,7 @@ from tensorflow.python.framework import sparse_tensor
 from tensorflow.python.ops import math_ops
 from tensorflow.python.ops import sparse_ops
 from os import path, mkdir
+from scipy.sparse.linalg.eigen.arpack import eigsh
 from sklearn import preprocessing
 import shutil
 import numpy as np
@@ -137,7 +138,7 @@ def add_degree(features, degrees):
     return sp.hstack([features, sp.csr_matrix(log_degrees)])
 
 
-def normalize_adj(adj):
+def get_normalize_adj(adj):
     """Symmetrically normalize adjacency matrix."""
     adj = sp.coo_matrix(adj)
     rowsum = np.array(adj.sum(1))
@@ -156,7 +157,7 @@ def norm_deg(adj):
         d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
     return degree, np.expand_dims(d_inv_sqrt, axis=1)
 
-def asym_normalize_adj(adj):
+def get_asym_normalize_adj(adj):
     adj = sp.coo_matrix(adj)
     rowsum = np.array(adj.sum(1))
     d_inv_sqrt = np.power(rowsum, -0.5).flatten()
@@ -195,7 +196,7 @@ def preprocess_adj2(adj):
     """Preprocessing of adjacency matrix for simple GCN model and conversion to tuple representation."""
     # adj_I    = adj + sp.eye(adj.shape[0])
     # adj_I    = adj
-    adj_normalized = normalize_adj(adj + sp.eye(adj.shape[0]))
+    adj_normalized = get_normalize_adj(adj + sp.eye(adj.shape[0]))
     #adj_normalized = normalize_adj(adj) + sp.eye(adj.shape[0])
     return adj_normalized
 
@@ -237,6 +238,7 @@ def construct_feed_dict(features, support, labels, labels_mask, placeholders, lr
 
     return feed_dict
 
+
 def parse_index_file(filename):
     """Parse index file."""
     index = []
@@ -275,9 +277,23 @@ def csc_row_set_nz_to_val(csc, row, value=0):
     csc.data[csc.indptr[row]:csc.indptr[row+1]] = value
     return csc
 
-def get_symm_laplacian_Term2(adjmat, degrees):
+
+def get_tf_unnormalize_adj(adjmat, degrees):
+    degrees = tf.expand_dims(1 / degrees, axis=1)
+    unnorm_adjmat = adjmat.__mul__(degrees)
+    return unnorm_adjmat
+
+def get_tf_normalize_adj(adjmat, degrees):
     degrees = tf.expand_dims(1/tf.sqrt(degrees), axis=1)
     laplacian = adjmat.__mul__(degrees)
     degrees = tf.transpose(degrees, [1, 0])
-    laplacian = laplacian.__mul__(degrees)
-    return laplacian
+    norm_adjmat = laplacian.__mul__(degrees)
+    return norm_adjmat
+
+
+def get_scaled_laplacian(adjmat):
+    adj_normalized = get_normalize_adj(adjmat)
+    laplacian = sp.eye(adjmat.shape[0]) - adj_normalized
+    largest_eigval, _ = eigsh(laplacian, 1, which='LM')
+    scaled_laplacian = (2. / largest_eigval[0]) * laplacian - sp.eye(adjmat.shape[0])
+    return scaled_laplacian
