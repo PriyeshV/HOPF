@@ -294,6 +294,15 @@ def get_tf_normalize_adj(adjmat, degrees):
 def get_scaled_laplacian(adjmat):
     adj_normalized = get_normalize_adj(adjmat)
     laplacian = sp.eye(adjmat.shape[0]) - adj_normalized
+    flag = False
+    while not flag:
+        try:
+            largest_eigval, _ = eigsh(laplacian, 1, which='LM')
+            flag = True
+        except:
+            print('adding noise')
+            laplacian += sp.diags(np.random.rand(adjmat.shape[0]))
+            flag = True
     largest_eigval, _ = eigsh(laplacian, 1, which='LM')
     scaled_laplacian = (2. / largest_eigval[0]) * laplacian - sp.eye(adjmat.shape[0])
     return scaled_laplacian
