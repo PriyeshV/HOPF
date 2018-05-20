@@ -9,17 +9,16 @@ class Parser(object):  #
         parser = argparse.ArgumentParser()
 
         # Node attribute Aggregator
-        parser.add_argument("--propModel", default='propagation_fusion', help='propagation model names',
-                            choices=['propagation', 'propagation_fusion', 'propagation_fusiond.py'])
+        parser.add_argument("--propModel", default='propagation_krylov2', help='propagation model names',
+                            choices=['propagation', 'propagation_fusion', 'propagation_krylov'])
         parser.add_argument("--aggKernel", default='kipf', help="kernel names",
                             choices=['kipf', 'simple', 'simple1', 'attention1', 'mul_attention', 'add_attention', 'embmul_attention',
                                      'keyval_attention', 'muladd_attention', 'maxpool', 'mul_attention2', 'mul_attention3'])
         parser.add_argument("--featureless", default=False, help="Non-attributed graphs", type=self.str2bool)
-        parser.add_argument("--node_features", default='h', help="x,h")
+        parser.add_argument("--node_features", default='-', help="x,h")
         parser.add_argument("--neighbor_features", default='h', help="x,h")
         parser.add_argument("--max_depth", default=2, help="Maximum path depth", type=int)
         parser.add_argument("--dims", default='64,64,64,64,64', help="Dimensions of hidden layers: comma separated")
-        # parser.add_argument("--dims", default='16,16,16,16,16', help="Dimensions of hidden layers: comma separated")
         parser.add_argument("--skip_connections", default=True, help="output layer added", type=self.str2bool)
 
         parser.add_argument("--shared_weights", default=1, type=int)
@@ -49,8 +48,8 @@ class Parser(object):  #
         parser.add_argument("--l2", default=1e-3, help="L2 loss", type=float)
         parser.add_argument("--opt", default='adam', help="Optimizer type", choices=['adam', 'sgd', 'rmsprop'])
         parser.add_argument("--drop_in", default=0.5, help="Dropout for input", type=float, choices=np.round(np.arange(0, 1, 0.05),2))
-        parser.add_argument("--drop_out", default=0.5, help="Dropout for Fusion", type=float,
-                            choices=np.round(np.arange(0, 1, 0.05), 2))
+        # parser.add_argument("--drop_out", default=0.5, help="Dropout for Fusion", type=float,
+        #                     choices=np.round(np.arange(0, 1, 0.05), 2))
 
         # Training parameters
         parser.add_argument("--retrain", default=False, type=self.str2bool, help="Retrain flag")

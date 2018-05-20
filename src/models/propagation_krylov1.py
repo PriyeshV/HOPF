@@ -1,13 +1,14 @@
 from src.models.model import Model
 from src.utils.metrics import *
 from src.layers.dense import Dense
-from src.layers.outer_gating import gated_prediction
+# from src.layers.fusion_sum import Fusion
+from src.layers.fusion_weighted_sum import Fusion
 
 
 class Propagation(Model):
 
     def __init__(self, config, data,  **kwargs):
-        kwargs['name'] = 'fusiond'
+        kwargs['name'] = 'krylov'
         super(Propagation, self).__init__(**kwargs)
 
         self.data.update(data)
@@ -28,7 +29,6 @@ class Propagation(Model):
             self.prev_pred = data['labels']
 
         self.conv_layer = config.kernel_class
-        # self.n_layers = config.max_depth + 1
         self.n_layers = config.max_depth + 2
         self.skip_conn = config.skip_connections
         self.shared_weights = config.shared_weights
@@ -36,19 +36,14 @@ class Propagation(Model):
         self.input_dims = config.n_features
         self.output_dims = config.n_labels
 
-        # self.sparse_inputs = [self.sparse_features] + [False] * (self.n_layers)
-        # self.dims = [self.input_dims] + config.dims + [config.dims[-1]] + [self.output_dims]
-        # self.act = [tf.nn.relu] * (self.n_layers)
-        # self.act.append(lambda x: x)
-        # self.dropouts = [self.data['dropout_conv']] * (self.n_layers) + [self.data['dropout_out']]
-
         self.sparse_inputs = [self.sparse_features] + [False] * (self.n_layers)
         self.dims = [self.input_dims] + config.dims + [config.dims[-1]] + [config.dims[-1]] + [self.output_dims]
-        # self.dims = [self.input_dims] + config.dims + [config.dims[-1]] + [self.output_dims] + [self.output_dims]
-        self.act = [tf.nn.relu] * (self.n_layers+1)
+        self.act = [tf.nn.relu] * (self.n_layers)
         self.act.append(lambda x: x)
 
-        self.dropouts = [self.data['dropout_conv']] * (self.n_layers) + [self.data['dropout_out']]
+        self.dropouts = [self.data['dropout_conv']] * self.n_layers
+        # self.drop_label = self.data['dropout_out']
+        self.drop_label = self.data['dropout_conv']
 
         self.optimizer = config.opt(learning_rate=data['lr'])
         self.density = data['batch_density']
@@ -64,27 +59,25 @@ class Propagation(Model):
 
         self.layers.append(
             Dense(input_dim=self.dims[0], output_dim=self.dims[1], nnz_features=self.data['nnz_features'],
-                  dropout=self.dropouts[0], act=self.act[0], bias=self.bias,
+                  dropout=self.dropouts[0],
+                  act=self.act[0], bias=self.bias,
                   sparse_inputs=self.sparse_inputs[0], logging=self.logging, model_name=self.name))
 
-        for i in range(1, self.n_layers):
-            print(self.name)
-            self.layers.append(self.conv_layer(layer_id=i, x_names=self.feature_names, dims=self.dims,
-                                               dropout=self.dropouts[i], act=self.act[i], bias=self.bias,
+        for i in range(1, self.n_layers-1):
+            self.layers.append(self.conv_layer(layer_id=i, x_names=self.feature_names, dims=self.dims, bias=self.bias,
+                                               weights=True,
+                                               dropout=self.dropouts[i],
+                                               # dropout=0.,
+                                               act=self.act[i],
                                                shared_weights=self.shared_weights, nnz_features=self.data['nnz_features'],
                                                sparse_inputs=self.sparse_inputs[i], skip_connection=self.skip_conn,
                                                add_labels=self.add_labels, logging=self.logging, model_name=self.name))
 
-        self.layers.append(gated_prediction(n_layers=self.n_layers, x_names=self.feature_names, dims=self.dims,
-                                            # dropout=self.dropouts[-1],
-                                            dropout=self.dropouts[0],
-                                            values=self.values, logging=self.logging,
-                                            bias=self.bias, model_name=self.name))
-
-        self.layers.append(
-            Dense(input_dim=self.dims[-1], output_dim=self.dims[-1], nnz_features=self.data['nnz_features'],
-                  dropout=self.dropouts[-1], act=lambda x: x, bias=self.bias,
-                  sparse_inputs=self.sparse_inputs[-1], logging=self.logging, model_name=self.name))
+        self.layers.append(Fusion(n_layers=self.n_layers-2, x_names=self.feature_names,
+                                  input_dim=self.dims[1], output_dim=self.output_dims,
+                                  dropout=self.dropouts[i+1],
+                                  act=lambda x:x, bias=self.bias,
+                                  logging=self.logging,  model_name=self.name))
 
     def predict(self):
         predictions = tf.slice(self.outputs, [0, 0], [self.n_node_ids, self.n_labels])

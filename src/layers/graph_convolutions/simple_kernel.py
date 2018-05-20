@@ -62,3 +62,10 @@ class Kernel(Kernels_new):
         degrees = tf.expand_dims(1/degrees, axis=1)
         laplacian = adjmat.__mul__(degrees)
         return laplacian
+
+    def get_laplacian2(self, adjmat, degrees):
+        degrees = tf.expand_dims(1/tf.sqrt(degrees), axis=1)
+        laplacian = adjmat.__mul__(degrees)
+        degrees = tf.transpose(degrees, [1, 0])
+        laplacian = laplacian.__mul__(degrees)
+        return laplacian

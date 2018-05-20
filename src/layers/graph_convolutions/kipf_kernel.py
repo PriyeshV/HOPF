@@ -54,7 +54,8 @@ class Kernel(Kernels_new):
         return neighbors
 
     def combine_neighbor_info(self, adjmat, degrees, n_nodes):
-        degrees = degrees + 1
+        if self.node_dims != 0:
+            degrees = degrees + 1
         weights = self.get_laplacian(adjmat, degrees)
         # weights = self.get_laplacian2(adjmat, degrees)
         return weights

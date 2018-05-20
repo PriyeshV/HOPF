@@ -6,8 +6,9 @@ from src.utils.utils import sparse_dropout, dot
 class Kernels_new(Layer):
 
     def __init__(self, layer_id, x_names, dims, dropout, act=tf.nn.relu, nnz_features=None, sparse_inputs=False,
-                 bias=False, shared_weights=True, skip_connection=False, add_labels=False, **kwargs):
+                 bias=False, shared_weights=True, skip_connection=False, add_labels=False, weights=True, **kwargs):
         super(Kernels_new, self).__init__(**kwargs)
+
 
         self.layer_id = layer_id
         self.act = act
@@ -17,6 +18,7 @@ class Kernels_new(Layer):
         self.nnz_features = nnz_features
         self.sparse_inputs = sparse_inputs
 
+        self.weights = weights
         self.bias = bias
         self.shared_weights = shared_weights
         self.node = None
@@ -56,25 +58,27 @@ class Kernels_new(Layer):
         for key in self.neighbor_features:
             self.neigh_dims += self.input_dims[key]
 
-        if not shared_weights:
-            # Neigh weights
-            self.weights_neigh = {}
-            self.bias_neigh = None
-            with tf.variable_scope(self.name + "_neighbor_vars"):
-                keys = self.neighbor_features
-                for key in keys:
-                    self.weights_neigh[key] = glorot((self.input_dims[key], self.output_dim), name=key + 'weights')
+        self.weights_node = {}
+        self.bias_node = None
+        self.weights_neigh = {}
+        self.bias_neigh = None
 
-        # Node weights
-        with tf.variable_scope(self.name + "_node_vars"):
-            self.weights_node = {}
-            self.bias_node = None
-            if shared_weights:
-                keys = self.node_feautures + list(set(self.neighbor_features) - set(self.node_feautures))
-            else:
-                keys = self.node_feautures
-            for key in keys:
-                self.weights_node[key] = glorot((self.input_dims[key], self.output_dim), name=key+'weights')
+        if weights:
+            if not shared_weights:
+                # Neigh weights
+                with tf.variable_scope(self.name + "_neighbor_vars"):
+                    keys = self.neighbor_features
+                    for key in keys:
+                        self.weights_neigh[key] = glorot((self.input_dims[key], self.output_dim), name=key + 'weights')
+
+            # Node weights
+            with tf.variable_scope(self.name + "_node_vars"):
+                if shared_weights:
+                    keys = self.node_feautures + list(set(self.neighbor_features) - set(self.node_feautures))
+                else:
+                    keys = self.node_feautures
+                for key in keys:
+                    self.weights_node[key] = glorot((self.input_dims[key], self.output_dim), name=key+'weights')
 
     def compute_features(self, inputs, weights, bias, keys, n_nodes):
             if len(keys) == 0:
@@ -82,6 +86,7 @@ class Kernels_new(Layer):
             output = tf.zeros(shape=(self.output_dim), dtype=tf.float32)
             for key in keys:
                 data = inputs[key]
+
                 dropout = self.dropout
                 if key == 'l':  # and self.layer_id == 0:
                     dropout = tf.minimum(self.dropout, 0.)
@@ -92,7 +97,11 @@ class Kernels_new(Layer):
                     data = tf.nn.dropout(data, 1 - dropout)
                 else:
                     data = sparse_dropout(data, 1 - dropout, self.nnz_features)
-                output += dot(data, weights[key], sparse=sparse_inputs)
+
+                if weights:
+                    output += dot(data, weights[key], sparse=sparse_inputs)
+                else:
+                    output += data
             return output
 
     def combine(self):
