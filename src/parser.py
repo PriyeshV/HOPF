@@ -9,17 +9,17 @@ class Parser(object):  #
         parser = argparse.ArgumentParser()
 
         # Node attribute Aggregator
-        parser.add_argument("--propModel", default='propagation_cheby', help='propagation model names',
+        parser.add_argument("--propModel", default='propagation_fusion', help='propagation model names',
                             choices=['propagation', 'propagation_fusion', 'propagation_krylov1', 'propagation_krylov2'
                                      'propagation_cheby'])
-        parser.add_argument("--aggKernel", default='chebyshev', help="kernel names",
+        parser.add_argument("--aggKernel", default='kipf', help="kernel names",
                             choices=['kipf', 'simple', 'chebyshev', 'maxpool', 'add_attention', 'mul_attention'])
         parser.add_argument("--featureless", default=False, help="Non-attributed graphs", type=self.str2bool)
         parser.add_argument("--node_features", default='h', help="x,h")
-        parser.add_argument("--neighbor_features", default='-', help="x,h")
+        parser.add_argument("--neighbor_features", default='h', help="x,h")
         parser.add_argument("--max_depth", default=2, help="Maximum path depth", type=int)
         parser.add_argument("--dims", default='64,64,64,64', help="Dimensions of hidden layers: comma separated")
-        parser.add_argument("--skip_connections", default=False, help="output layer added", type=self.str2bool)
+        parser.add_argument("--skip_connections", default=True, help="output layer added", type=self.str2bool)
 
         parser.add_argument("--shared_weights", default=1, type=int)
         parser.add_argument("--bias", default=False, type=self.str2bool)

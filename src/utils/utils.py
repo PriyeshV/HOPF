@@ -300,7 +300,7 @@ def get_scaled_laplacian(adjmat):
             largest_eigval, _ = eigsh(laplacian, 1, which='LM')
             flag = True
         except:
-            print('adding noise')
+            print('Convergence ERROR | Adding adding noise to diag of laplacian')
             laplacian += sp.diags(np.random.rand(adjmat.shape[0]))
             flag = True
     largest_eigval, _ = eigsh(laplacian, 1, which='LM')
