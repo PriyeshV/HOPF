@@ -12,7 +12,7 @@ class Kernel(Kernels_new):
             self.vars['bias'] = zeros([self.output_dim], name='bias')
 
     def _call(self, inputs):
-        # DROPOUT
+
         data = {}
         scaled_adjmat = inputs['adjmat']
         data['h_k-1'] = inputs['activations'][-1]

@@ -80,7 +80,7 @@ class OuterPropagation(object):
         if self.config.kernel_name == 'simple':
             adjmat = get_tf_unnormalize_adj(adjmat, data['degrees'])
         elif self.config.kernel_name == 'kipf':
-            adjmat = get_tf_normalize_adj(adjmat, data['degrees'])
+            adjmat = get_tf_normalize_adj(adjmat, data['degrees'] + 1)
 
         data['adjmat'] = adjmat
 
