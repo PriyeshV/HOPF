@@ -283,6 +283,7 @@ def get_tf_unnormalize_adj(adjmat, degrees):
     unnorm_adjmat = adjmat.__mul__(degrees)
     return unnorm_adjmat
 
+
 def get_tf_normalize_adj(adjmat, degrees):
     degrees = tf.expand_dims(1/tf.sqrt(degrees), axis=1)
     laplacian = adjmat.__mul__(degrees)
@@ -306,3 +307,7 @@ def get_scaled_laplacian(adjmat):
     largest_eigval, _ = eigsh(laplacian, 1, which='LM')
     scaled_laplacian = (2. / largest_eigval[0]) * laplacian - sp.eye(adjmat.shape[0])
     return scaled_laplacian
+
+
+def reduce_sum_det(x):
+    return tf.reshape(tf.matmul(v, tf.ones_like(v), transpose_b=True), [])

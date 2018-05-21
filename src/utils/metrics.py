@@ -1,4 +1,5 @@
 import tensorflow as tf
+from src.utils.utils import reduce_sum_det
 
 
 def masked_sigmoid_binary_cross_entropy(preds, labels, mask, wce, multilabel):
@@ -17,13 +18,20 @@ def masked_sigmoid_binary_cross_entropy(preds, labels, mask, wce, multilabel):
     return tf.reduce_mean(loss)
 
 
-def sigmoid_binary_cross_entropy(preds, labels, wce, multilabel):
+def reduce_sum_lossop(x, n_labels):
+    return tf.squeeze(tf.matmul(x, tf.ones([n_labels, 1])))
+
+
+def sigmoid_binary_cross_entropy(preds, labels, wce, multilabel, n_labels):
+
     if multilabel:
         label_sigmoid = tf.nn.sigmoid(preds)
-        loss = -tf.reduce_sum((labels * tf.log(label_sigmoid + 1e-10) + (1-labels) * tf.log((1-label_sigmoid) + 1e-10)) * wce, 1)
+        # loss = -tf.reduce_sum((labels * tf.log(label_sigmoid + 1e-10) + (1-labels) * tf.log((1-label_sigmoid) + 1e-10)) * wce, 1)
+        loss = -reduce_sum_lossop((labels * tf.log(label_sigmoid + 1e-10) + (1 - labels) * tf.log((1 - label_sigmoid) + 1e-10)) * wce, n_labels)
     else:
         label_sigmoid = tf.nn.softmax(preds)
-        loss = -tf.reduce_sum((labels * tf.log(label_sigmoid + 1e-10)) * wce, 1)
+        # loss = -tf.reduce_sum((labels * tf.log(label_sigmoid + 1e-10)) * wce, 1)
+        loss = -reduce_sum_lossop((labels * tf.log(label_sigmoid + 1e-10)) * wce, n_labels)
     return tf.reduce_mean(loss)
 
 

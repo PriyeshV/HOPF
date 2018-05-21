@@ -6,6 +6,7 @@ def identity(shape, scale=1, name=None):
     "Diagonal init"
     return tf.Variable(tf.eye(shape[0])*scale, name=name)
 
+
 def uniform(shape, scale=0.05, name=None):
     """Uniform init."""
     initial = tf.random_uniform(shape, minval=-scale, maxval=scale, dtype=tf.float32)
@@ -38,6 +39,7 @@ def zeros(shape, name=None):
     """All zeros."""
     initial = tf.zeros(shape, dtype=tf.float32)
     return tf.Variable(initial, name=name)
+
 
 def const(shape, val=0.1, name=None):
     initial = tf.constant(val, shape=shape, dtype=tf.float32)
