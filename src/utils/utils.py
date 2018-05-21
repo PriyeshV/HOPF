@@ -309,5 +309,5 @@ def get_scaled_laplacian(adjmat):
     return scaled_laplacian
 
 
-def reduce_sum_det(x):
-    return tf.reshape(tf.matmul(v, tf.ones_like(v), transpose_b=True), [])
+# def reduce_sum_det(x):
+#     return tf.reshape(tf.matmul(v, tf.ones_like(v), transpose_b=True), [])
