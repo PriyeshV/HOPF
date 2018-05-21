@@ -1,6 +1,8 @@
 from src.utils.utils import *
 import tensorflow as tf
 import time
+import pickle
+import os.path
 import random
 
 # TODO We should move all numpy data to TF data with device set to CPU
@@ -103,44 +105,21 @@ class Dataset:
 
         # Load adjacency matrix - convert to sparse if not sparse # if not sp.issparse(adj):
         adjmat = sio.loadmat(config.paths['adjmat'])['adjmat']
-        # if config.transductive:
-        #     print('data processing - removing edges b/w train and (test + val)')
-        #     # test_val_nodes = np.hstack([test_nodes, val_nodes])
-            #
-            # for node in train_nodes:
-            #     start = adjmat.indptr[node]
-            #     end = adjmat.indptr[node + 1]
-            #     if start - end == 0:
-            #         continue
-            #     neighbors = adjmat.indices[start:end]
-            #     remove_pos = np.in1d(neighbors, test_val_nodes)
-            #     n_removes = np.count_nonzero(remove_pos)
-            #     if n_removes == 0:
-            #         continue
-            #     neighbors[remove_pos] = np.zeros(n_removes)
-            #     adjmat.data[start:end] = neighbors
-            #
-            # for node in test_val_nodes:
-            #     start = adjmat.indptr[node]
-            #     end = adjmat.indptr[node + 1]
-            #     if start - end == 0:
-            #         continue
-            #     neighbors = adjmat.indices[start:end]
-            #     remove_pos = np.in1d(neighbors, train_nodes)
-            #     n_removes = np.count_nonzero(remove_pos)
-            #     if n_removes == 0:
-            #         continue
-            #     neighbors[remove_pos] = np.zeros(n_removes)
-            #     adjmat.data[start:end] = neighbors
-            #
-            # print('edge removal over')
-            # print(np.count_nonzero(np.where(adjmat.sum(1)) == 0)[0])
-            # adjmat.eliminate_zeros()
 
         graph = nx.from_scipy_sparse_matrix(adjmat)
         # Makes it undirected graph it CSR format
         adjmat = nx.adjacency_matrix(graph)
-        self.adjlist = graph.adjacency_list()
+
+        f_adjlist_name = path.join(config.paths['datasets'], config.dataset_name, 'adjlist.pkl')
+        if os.path.exists(f_adjlist_name):
+            print('Adjlist exist: ')
+            with open(f_adjlist_name, "rb") as fp:
+                self.adjlist = pickle.load(fp)
+        else:
+            print('does not exist')
+            self.adjlist = graph.adjacency_list()
+            with open(f_adjlist_name, "wb") as fp:
+                pickle.dump(self.adjlist, fp)
 
         # .indices attribute should only be used on row slices
         if not isinstance(adjmat, sp.csr_matrix):

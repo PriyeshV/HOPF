@@ -65,7 +65,6 @@ class Model(object):
             hidden = self.act[i](hidden)
             self.data['activations'].append(hidden)
         self.outputs = self.data['activations'][-1]
-        exit()
 
         # Store model variables for easy access
         variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=self.name)
