@@ -43,17 +43,19 @@ class Fusion(Layer):
         self.vars['weights_V'] = tanh_init((1, gate_dim), name='weights_V')
 
     def _call(self, inputs):
-        outputs = []
+        outputs = 0
         for i in range(self.start_h, self.n_layers):
             print('Fusion input:', i+1)
             data = inputs['activations'][i+1]
             data = tf.nn.dropout(data, 1 - self.dropout)
             data = tf.matmul(data, self.vars['weights_'+str(i)])
-            outputs.append(data)
+            # outputs.append(data)
+            outputs += data
 
-        outputs = tf.reduce_mean(outputs, axis=0)
+        # outputs = tf.reduce_mean(outputs, axis=0)
+        outputs /= (self.n_layers - self.start_h)
 
-        outputs = tf.squeeze(outputs)
+        # outputs = tf.squeeze(outputs)
         outputs = self.act(outputs)
         return outputs
 
