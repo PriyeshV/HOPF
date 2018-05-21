@@ -79,7 +79,9 @@ class OuterPropagation(object):
 
         if self.config.kernel_name == 'simple':
             adjmat = get_tf_unnormalize_adj(adjmat, data['degrees'])
-        elif self.config.kernel_name == 'kipf':
+        elif self.config.kernel_name == 'kipf' and \
+                self.config.prop_model_name in ['binomial', 'binomial_fusion',
+                                                'propagation', 'propagation_fusion', 'propagation_fusion2']:
             adjmat = get_tf_normalize_adj(adjmat, data['degrees'] + 1)
 
         data['adjmat'] = adjmat

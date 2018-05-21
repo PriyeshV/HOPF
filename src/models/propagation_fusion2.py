@@ -1,7 +1,6 @@
-from src.models.model import Model
+from src.models.model_old import Model
 from src.utils.metrics import *
 from src.layers.dense import Dense
-# from src.layers.fusion_sum import Fusion
 from src.layers.fusion_weighted_sum import Fusion
 
 

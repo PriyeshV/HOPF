@@ -9,6 +9,18 @@ Few Available Kernels: </br>
 2> Node Information Preserving Kernel </br>
 3> Gated GCN </br>
 
+Available bases:</br>
+1> Binomial </br>
+    - Supports Node only and Neighbor only baselines </br>
+    - Skip connection supported for Graph Convolutions </br>
+    - Supported kernels: simple | kipf </br> 
+    - Fusion model available: binomial_fusion </br>
+2> Chebyshev </br>
+    - Skip connection internally turned Off (as it will change basis) </br>
+    - Supported kernels: chebyshev (Default internally) </br>
+3> Krylov </br>
+    - Skip connection internally turned Off (as it will change basis) </br>
+    - Supported kernels: simple | kipf (Kipf to be preferred)</br>
 
 view parser.py to </br>
 1> Specify the kernel </br>

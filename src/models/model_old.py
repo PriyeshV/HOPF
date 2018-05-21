@@ -26,13 +26,12 @@ class Model(object):
         self.data['activations'] = []
         self.inputs = None
         self.outputs = None
-        self.n_node_features = 0
-        self.n_neigh_features = 0
         self.num_features_nonzero = 0
 
         self.loss = 0
         self.accuracy = 0
         self.optimizer = None
+        self.grad = None
         self.opt_op = None
         self.scores = None
 
@@ -54,18 +53,23 @@ class Model(object):
         # Build sequential layer model
         self.data['activations'].append(self.inputs)
         for i, layer in enumerate(self.layers):
-            hidden = layer(self.data)
+            print('Layer ', i, ' : ', layer)
+            if i == 0:
+                hidden, h0 = layer(self.data)
+                self.data['activations'].append(self.act[i](h0))
+            else:
+                hidden = layer(self.data)
 
-            if self.skip_conn and (i != self.n_layers and i != 0) and \
-                    not (self.name == 'binomial' and i == 1 and self.n_node_features == 0):
-                print('Hop Skip connection| From: ', i, ' To: ', i+1, layer)
-                hidden += self.data['activations'][-1]
+            # Add skip connections and pass it through and activation layer
+            if i != self.n_layers:
+                if self.skip_conn:
+                    if i != 0:
+                        print('Hop Skip connection| From: ', i, ' To: ', i+1, layer)
+                        hidden += self.data['activations'][-1]
+                hidden = self.act[i](hidden)
 
-            print(i, layer, self.act[i])
-            hidden = self.act[i](hidden)
             self.data['activations'].append(hidden)
         self.outputs = self.data['activations'][-1]
-        exit()
 
         # Store model variables for easy access
         variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=self.name)
@@ -80,7 +84,6 @@ class Model(object):
                                   for grad, var in grads_and_vars]
         self.grad, _ = clipped_grads_and_vars[0]
         self.opt_op = self.optimizer.apply_gradients(clipped_grads_and_vars)
-        # self.opt_op = self.optimizer.minimize(self.loss)
 
     def predict(self):
         pass

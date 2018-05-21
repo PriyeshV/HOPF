@@ -21,7 +21,7 @@ class Fusion(Layer):
         self.fusion_dim = self.output_dim
 
         self.start_h = 0
-        if len(self.node_features) == 0 and self.m_name != 'krylov':
+        if len(self.node_features) == 0 and self.m_name not in ['krylov', 'cheby']:
             self.start_h += 1
 
         self.fusion_dim = self.output_dim

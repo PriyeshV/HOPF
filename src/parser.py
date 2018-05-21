@@ -9,13 +9,13 @@ class Parser(object):  #
         parser = argparse.ArgumentParser()
 
         # Node attribute Aggregator
-        parser.add_argument("--propModel", default='propagation_attention2', help='propagation model names',
-                            choices=['propagation', 'propagation_fusion', 'propagation_krylov1', 'propagation_krylov2'
-                                     'propagation_cheby'])
+        parser.add_argument("--propModel", default='attention', help='propagation model names',
+                            choices=['propagation', 'propagation_fusion', 'krylov1', 'krylov2'
+                                     'chebyshev', 'attention'])
         parser.add_argument("--aggKernel", default='kipf', help="kernel names",
                             choices=['kipf', 'simple', 'chebyshev', 'maxpool', 'add_attention', 'mul_attention'])
         parser.add_argument("--featureless", default=False, help="Non-attributed graphs", type=self.str2bool)
-        parser.add_argument("--node_features", default='-', help="x,h")
+        parser.add_argument("--node_features", default='h', help="x,h")
         parser.add_argument("--neighbor_features", default='h', help="x,h")
         parser.add_argument("--max_depth", default=2, help="Maximum path depth", type=int)
         parser.add_argument("--dims", default='64,64,64,64', help="Dimensions of hidden layers: comma separated")
