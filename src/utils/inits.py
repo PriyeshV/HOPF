@@ -2,6 +2,10 @@ import tensorflow as tf
 import numpy as np
 
 
+def identity(shape, scale=1, name=None):
+    "Diagonal init"
+    return tf.Variable(tf.eye(shape[0])*scale, name=name)
+
 def uniform(shape, scale=0.05, name=None):
     """Uniform init."""
     initial = tf.random_uniform(shape, minval=-scale, maxval=scale, dtype=tf.float32)

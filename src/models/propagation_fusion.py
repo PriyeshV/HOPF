@@ -1,5 +1,6 @@
 from src.models.model import Model
 from src.utils.metrics import *
+from src.layers.dense import Dense
 from src.layers.fusion_weighted_sum import Fusion
 
 class Propagation(Model):
@@ -61,10 +62,12 @@ class Propagation(Model):
                                                add_labels=self.add_labels, logging=self.logging, model_name=self.name))
 
         self.layers.append(Fusion(n_layers=self.n_layers, x_names=self.feature_names,
-                                  input_dim=self.dims[1], output_dim=self.output_dims,
-                                  dropout=self.drop_fuse,
-                                  act=(lambda x: x), bias=self.bias,
-                                  logging=self.logging, model_name=self.name))
+                                 input_dim=self.dims[1], output_dim=self.output_dims,
+                                 dropout=self.drop_fuse,
+                                 act=(lambda x: x), bias=self.bias,
+                                 logging=self.logging, model_name=self.name))
+
+
 
     def predict(self):
         predictions = tf.slice(self.outputs, [0, 0], [self.n_node_ids, self.n_labels])
