@@ -27,7 +27,8 @@ pip install xlwt
 pip install python-dateutil
 pip install matplotlib
 pip install pyyaml
-pip install networkx
+pip install networkx==1.9
+pip install --upgrade https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow_gpu-1.3.0-cp35-cp35m-linux_x86_64.whl
 #pip install tensorflow-gpu
 
 sudo apt-get install google-perftools

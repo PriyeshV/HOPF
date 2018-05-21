@@ -2,18 +2,14 @@ import tensorflow as tf
 from src.layers.layer import Layer
 from src.utils.inits import glorot, tanh_init, identity
 
-#TODO:
-#   - Activation of each layer before fusion
-#   - Dimensions
-#   - Mean vs sum
-
 
 class Fusion(Layer):
 
-    def __init__(self, n_layers, x_names, input_dim, output_dim, dropout, bias,  act=lambda x: x,**kwargs):
+    def __init__(self, n_layers, x_names, b_size, input_dim, output_dim, dropout, bias,  act=lambda x: x,**kwargs):
         super(Fusion, self).__init__(**kwargs)
 
         self.n_layers = n_layers + 1
+        self.batch_size = b_size
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.act = act
@@ -21,7 +17,8 @@ class Fusion(Layer):
         self.node_features = x_names[0]
         self.neighbor_features = x_names[1]
         self.bias = bias
-        # self.fusion_dim = 128
+
+        # Default
         self.fusion_dim = self.output_dim
 
         self.start_h = 0
@@ -31,16 +28,8 @@ class Fusion(Layer):
         self.fusion_dim = self.output_dim
         for i in range(self.start_h, self.n_layers):
             self.vars['weights_'+str(i)] = glorot((self.input_dim, self.fusion_dim), name='weights_'+str(i))
-        self.vars['weights_final'] = identity((self.fusion_dim, self.output_dim), name='weights_final')
 
-        # Matrix gating
-        self.vars['weights_A'] = identity((self.fusion_dim, self.fusion_dim), name='weights_A')
-
-        # Triple vector Gating
-        gate_dim = self.fusion_dim
-        self.vars['weights_C'] = identity((self.fusion_dim, gate_dim), name='weights_C')
-        self.vars['weights_D'] = identity((self.fusion_dim, gate_dim), name='weights_D')
-        self.vars['weights_V'] = tanh_init((1, gate_dim), name='weights_V')
+        # You can add weights and make it one layer deep
 
     def _call(self, inputs):
         outputs = 0
@@ -49,58 +38,8 @@ class Fusion(Layer):
             data = inputs['activations'][i+1]
             data = tf.nn.dropout(data, 1 - self.dropout)
             data = tf.matmul(data, self.vars['weights_'+str(i)])
-            # outputs.append(data)
             outputs += data
 
-        # outputs = tf.reduce_mean(outputs, axis=0)
         outputs /= (self.n_layers - self.start_h)
-
-        # outputs = tf.squeeze(outputs)
         outputs = self.act(outputs)
-        return outputs
-
-    def _call2(self, inputs):
-        outputs = []
-        for i in range(self.start_h, self.n_layers):
-            print('Fusion input:', i+1)
-            data = inputs['activations'][i+1]
-            data = tf.nn.dropout(data, 1 - self.dropout)
-            data = tf.matmul(data, self.vars['weights_'+str(i)])
-            outputs.append(data)
-
-        # Attention score:= < variables* A * Context >
-        context = tf.reduce_mean(outputs, axis=0)
-        context = tf.matmul(context, self.vars['weights_C'])
-
-        outs = 0
-        for i in range(self.start_h, self.n_layers):
-            score = tf.nn.tanh(tf.reduce_sum(tf.multiply(outputs[i], context), axis=1, keep_dims=True))
-            outs += score*outputs[i]
-
-        outs = tf.matmul(outs/(self.n_layers-self.start_h), self.vars['weights_final'])
-        outputs = self.act(outs)
-        return outputs
-
-    def _call_new(self, inputs):
-        outputs = []
-        for i in range(self.start_h, self.n_layers):
-            print('Fusion input:', i+1)
-            data = inputs['activations'][i+1]
-            data = tf.nn.dropout(data, 1 - self.dropout)
-            data = tf.matmul(data, self.vars['weights_'+str(i)])
-            outputs.append(data)
-
-        # Attention score:= tanh [W_V * ( Context * W_C + D * W_D)]
-        context = tf.reduce_mean(outputs, axis=0) # context is based on the global average
-        context = tf.matmul(context, self.vars['weights_C'])
-
-        outs = 0
-        for i in range(self.start_h, self.n_layers):
-            temp = tf.matmul(outputs[i], self.vars['weights_D']) + context
-            score = tf.reduce_sum(tf.multiply(temp, self.vars['weights_V']), axis=1, keep_dims=True)
-            score = tf.nn.tanh(score)
-            outs += score*outputs[i]
-
-        outs = tf.matmul(outs / (self.n_layers - self.start_h), self.vars['weights_final'])
-        outputs = self.act(outs)
         return outputs
