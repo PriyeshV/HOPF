@@ -1,6 +1,6 @@
 import tensorflow as tf
 from src.layers.layer import Layer
-from src.utils.inits import glorot, identity, tanh_init
+from src.utils.inits import glorot, tanh_init, identity
 
 #TODO:
 #   - Activation of each layer before fusion
@@ -21,8 +21,8 @@ class Fusion(Layer):
         self.node_features = x_names[0]
         self.neighbor_features = x_names[1]
         self.bias = bias
-        self.fusion_dim = 128
-        # self.fusion_dim = self.output_dim
+        # self.fusion_dim = 128
+        self.fusion_dim = self.output_dim
 
         self.start_h = 0
         if len(self.node_features) == 0 and self.m_name != 'krylov':
@@ -52,10 +52,10 @@ class Fusion(Layer):
             outputs.append(data)
 
         outputs = tf.reduce_mean(outputs, axis=0)
+
         outputs = tf.squeeze(outputs)
         outputs = self.act(outputs)
         return outputs
-
 
     def _call2(self, inputs):
         outputs = []
@@ -79,7 +79,7 @@ class Fusion(Layer):
         outputs = self.act(outs)
         return outputs
 
-    def _call(self, inputs):
+    def _call_new(self, inputs):
         outputs = []
         for i in range(self.start_h, self.n_layers):
             print('Fusion input:', i+1)

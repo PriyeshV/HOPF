@@ -94,7 +94,7 @@ class Propagation(Model):
 
         # Cross entropy Loss
         predictions = tf.slice(self.outputs, [0, 0], [self.n_node_ids, self.n_labels])
-        self.ce_loss = sigmoid_binary_cross_entropy(predictions, self.data['targets'], self.wce_val, self.multilabel)
+        self.ce_loss = sigmoid_binary_cross_entropy(predictions, self.data['targets'], self.wce_val, self.multilabel, self.n_labels)
         self.loss += self.ce_loss
 
         # L2 Loss
