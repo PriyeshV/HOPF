@@ -45,7 +45,7 @@ class Fusion(Layer):
     def reduce_sum_attsop(self, x):
         return tf.matmul(x, tf.ones([self.output_dim, 1]))
 
-    def _call(self, inputs):
+    def _call2(self, inputs):
         outputs = []
         for i in range(self.start_h, self.n_layers):
             print('Fusion input:', i+1)
@@ -72,7 +72,7 @@ class Fusion(Layer):
         outputs = self.act(outs)
         return outputs
 
-    def _call2(self, inputs):
+    def _call(self, inputs):
         outputs = []
         for i in range(self.start_h, self.n_layers):
             print('Fusion input:', i+1)
