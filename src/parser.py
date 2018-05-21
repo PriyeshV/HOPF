@@ -39,7 +39,7 @@ class Parser(object):  #
                                     'ppi_sg', 'blogcatalog', 'genes_fn', 'mlgene', 'ppi_gs', 'reddit', 'reddit_ind'])
         parser.add_argument("--labels", default='labels_random', help="Label Sampling Type")
         parser.add_argument("--percents", default='10', help="Training percent comma separated, ex:5,10,20")
-        parser.add_argument("--folds", default='2,3,4,5', help="Training folds comma separated")
+        parser.add_argument("--folds", default='1,2,3,4,5', help="Training folds comma separated")
 
         # NN Hyper parameters
         parser.add_argument("--batch_size", default=128, help="Batch size", type=int)

@@ -42,7 +42,7 @@ class Fusion(Layer):
         self.vars['weights_D'] = identity((self.fusion_dim, gate_dim), name='weights_D')
         self.vars['weights_V'] = tanh_init((1, gate_dim), name='weights_V')
 
-    def _call_original(self, inputs):
+    def _call(self, inputs):
         outputs = []
         for i in range(self.start_h, self.n_layers):
             print('Fusion input:', i+1)

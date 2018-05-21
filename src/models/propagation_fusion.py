@@ -3,6 +3,7 @@ from src.utils.metrics import *
 from src.layers.dense import Dense
 from src.layers.fusion_weighted_sum import Fusion
 
+
 class Propagation(Model):
 
     def __init__(self, config, data,  **kwargs):
@@ -66,8 +67,6 @@ class Propagation(Model):
                                  dropout=self.drop_fuse,
                                  act=(lambda x: x), bias=self.bias,
                                  logging=self.logging, model_name=self.name))
-
-
 
     def predict(self):
         predictions = tf.slice(self.outputs, [0, 0], [self.n_node_ids, self.n_labels])
