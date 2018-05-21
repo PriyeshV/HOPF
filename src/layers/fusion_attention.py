@@ -10,11 +10,10 @@ from src.utils.inits import glorot, tanh_init, identity
 
 class Fusion(Layer):
 
-    def __init__(self, n_layers, x_names, b_size, input_dim, output_dim, dropout, bias,  act=lambda x: x,**kwargs):
+    def __init__(self, n_layers, x_names, input_dim, output_dim, dropout, bias,  act=lambda x: x,**kwargs):
         super(Fusion, self).__init__(**kwargs)
 
         self.n_layers = n_layers + 1
-        self.batch_size = b_size
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.act = act
@@ -26,8 +25,8 @@ class Fusion(Layer):
         self.fusion_dim = self.output_dim
 
         self.start_h = 0
-        if len(self.node_features) == 0 and self.m_name != 'krylov':
-            self.start_h += 1
+        # if len(self.node_features) == 0 and self.m_name no:
+        #     self.start_h += 1
 
         self.fusion_dim = self.output_dim
         for i in range(self.start_h, self.n_layers):
@@ -46,7 +45,7 @@ class Fusion(Layer):
     def reduce_sum_attsop(self, x):
         return tf.matmul(x, tf.ones([self.output_dim, 1]))
 
-    def _call2(self, inputs):
+    def _call(self, inputs):
         outputs = []
         for i in range(self.start_h, self.n_layers):
             print('Fusion input:', i+1)
@@ -73,7 +72,7 @@ class Fusion(Layer):
         outputs = self.act(outs)
         return outputs
 
-    def _call(self, inputs):
+    def _call2(self, inputs):
         outputs = []
         for i in range(self.start_h, self.n_layers):
             print('Fusion input:', i+1)

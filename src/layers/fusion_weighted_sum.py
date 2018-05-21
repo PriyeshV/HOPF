@@ -5,11 +5,10 @@ from src.utils.inits import glorot, tanh_init, identity
 
 class Fusion(Layer):
 
-    def __init__(self, n_layers, x_names, b_size, input_dim, output_dim, dropout, bias,  act=lambda x: x,**kwargs):
+    def __init__(self, n_layers, x_names, input_dim, output_dim, dropout, bias,  act=lambda x: x,**kwargs):
         super(Fusion, self).__init__(**kwargs)
 
         self.n_layers = n_layers + 1
-        self.batch_size = b_size
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.act = act

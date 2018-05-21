@@ -7,7 +7,7 @@ from src.layers.fusion_attention import Fusion
 class Propagation(Model):
 
     def __init__(self, config, data,  **kwargs):
-        kwargs['name'] = 'fusion'
+        kwargs['name'] = 'krylov'
         super(Propagation, self).__init__(**kwargs)
 
         self.data.update(data)
@@ -16,7 +16,6 @@ class Propagation(Model):
         self.add_labels = config.add_labels
         self.bias = config.bias
         self.n_node_ids = data['n_node_ids']
-        self.batch_size = data['n_conn_nodes']
         self.n_labels = config.n_labels
         self.wce_val = data['wce']
         self.oe_id = data['outer_epoch']
@@ -29,7 +28,7 @@ class Propagation(Model):
             self.prev_pred = data['labels']
 
         self.conv_layer = config.kernel_class
-        self.n_layers = config.max_depth
+        self.n_layers = config.max_depth + 1
         self.skip_conn = config.skip_connections
         self.shared_weights = config.shared_weights
 
@@ -37,12 +36,13 @@ class Propagation(Model):
         self.output_dims = config.n_labels
 
         self.sparse_inputs = [self.sparse_features] + [False] * (self.n_layers)
-        self.dims = [self.input_dims] + config.dims + [self.output_dims]
+        self.dims = [self.input_dims] + config.dims + [config.dims[-1]] + [config.dims[-1]] + [self.output_dims]
         self.act = [tf.nn.relu] * (self.n_layers)
         self.act.append(lambda x: x)
 
-        self.dropouts = [self.data['dropout_conv']] * (self.n_layers)
-        self.drop_fuse = self.data['dropout_out']
+        self.dropouts = [self.data['dropout_conv']] * self.n_layers
+        # self.drop_label = self.data['dropout_out']
+        self.drop_label = self.data['dropout_conv']
 
         self.optimizer = config.opt(learning_rate=data['lr'])
         self.density = data['batch_density']
@@ -53,21 +53,30 @@ class Propagation(Model):
         self.build()
         self.predictions = self.predict()
 
-
     def _build(self):
         # TODO Featureless
-        for i in range(self.n_layers):
-            self.layers.append(self.conv_layer(layer_id=i, x_names=self.feature_names, dims=self.dims,
-                                               dropout=self.dropouts[i], act=self.act[i], bias=self.bias,
+
+        self.layers.append(
+            Dense(input_dim=self.dims[0], output_dim=self.dims[1], nnz_features=self.data['nnz_features'],
+                  dropout=self.dropouts[0],
+                  act=self.act[0], bias=self.bias,
+                  sparse_inputs=self.sparse_inputs[0], logging=self.logging, model_name=self.name))
+
+        for i in range(1, self.n_layers):
+            self.layers.append(self.conv_layer(layer_id=i, x_names=self.feature_names, dims=self.dims, bias=self.bias,
+                                               weights=True,
+                                               dropout=self.dropouts[i],
+                                               # dropout=0.,
+                                               act=self.act[i],
                                                shared_weights=self.shared_weights, nnz_features=self.data['nnz_features'],
                                                sparse_inputs=self.sparse_inputs[i], skip_connection=self.skip_conn,
                                                add_labels=self.add_labels, logging=self.logging, model_name=self.name))
 
-        self.layers.append(Fusion(n_layers=self.n_layers, x_names=self.feature_names, b_size=self.batch_size,
-                                 input_dim=self.dims[1], output_dim=self.output_dims,
-                                 dropout=self.drop_fuse,
-                                 act=(lambda x: x), bias=self.bias,
-                                 logging=self.logging, model_name=self.name))
+        self.layers.append(Fusion(n_layers=self.n_layers-1, x_names=self.feature_names,
+                                  input_dim=self.dims[1], output_dim=self.output_dims,
+                                  dropout=self.drop_label,
+                                  act=lambda x:x, bias=self.bias,
+                                  logging=self.logging,  model_name=self.name))
 
     def predict(self):
         predictions = tf.slice(self.outputs, [0, 0], [self.n_node_ids, self.n_labels])
