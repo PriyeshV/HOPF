@@ -416,13 +416,14 @@ class OuterPropagation(object):
         summary_writers = {'train': summary_writer_train, 'val': summary_writer_val, 'test': summary_writer_test}
         return summary_writers
 
-def init_model(config):
+
+def init_model(config, dataset):
     tf.reset_default_graph()
     tf.set_random_seed(1234)
     np.random.seed(1234)
 
     # Load data
-    dataset = Dataset(config)
+    # dataset = Dataset(config)
 
     with tf.variable_scope('Graph_Convolutional_Network', reuse=None):
         model = OuterPropagation(dataset)
@@ -467,9 +468,9 @@ def dump_results(config, i_epoch, tr_metrics, val_metrics, te_metrics):
     return values
 
 
-def train_model(cfg):
-    config = deepcopy(cfg)
-    model, sess = init_model(config)
+def train_model(dataset):
+    config = deepcopy(dataset.get_config())
+    model, sess = init_model(config, dataset)
     summary_writers = model.add_summaries(sess)
     i_epochs, tr_metrics, val_metrics, te_metrics = model.fit_outer(sess, summary_writers)
     return dump_results(config, i_epochs, tr_metrics, val_metrics, te_metrics)
@@ -479,7 +480,10 @@ def main():
 
     args = Parser().get_parser().parse_args()
     print("=====Configurations=====\n", args)
+
+    # Load Configuration and data
     config = Config(args)
+    dataset = Dataset(config)
 
     start = time.time()
 
@@ -490,12 +494,15 @@ def main():
     perc_results = [[]]*len(config.train_percents)
     for perc_id, train_percent in enumerate(config.train_percents):
         print('\n\n############################  Percentage: ', train_percent, '#####################################')
-        config.train_percent = train_percent
+        # config.train_percent = train_percent
         fold_results = [[]]*len(config.train_folds)
         for fold_id, fold in enumerate(config.train_folds):
             print('\n------- Fold: ', fold)
-            config.train_fold = fold
-            values = train_model(config)
+
+            # config.train_fold = fold
+            dataset.load_indexes(train_percent, fold)
+            values = train_model(dataset)
+
             if config.prop_model_name == 'propagation_gated':
                 np.save(path.join(config.paths['experiment'],
                                   config.dataset_name + '-' + str(fold) + '-' + str(config.max_depth) + '_gating_scores.npy'), scores)

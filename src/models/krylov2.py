@@ -50,7 +50,10 @@ class Propagation(Model):
         self.optimizer = config.opt(learning_rate=data['lr'])
         self.density = data['batch_density']
 
-        self.feature_names = (config.node_features, config.neighbor_features)
+        # Convolution Features
+        self.feature_names = ([], config.neighbor_features)
+        self.n_node_features = 0
+        self.n_neigh_features = config.n_neigh_features
 
         self.values = []
         self.build()

@@ -12,18 +12,15 @@ class Dataset:
         self.config = config
 
         t0 = time.time()
-        self.adjmat, features, self.targets, mask, nodes, self.wce, self.config.multilabel = self.load_data(config)
+        # self.adjmat, features, self.targets, mask, nodes, self.wce, self.config.multilabel = self.load_data(config)
+        self.adjmat, features, self.targets, self.config.multilabel = self.load_data(config)
         print("Dataset loaded in: ", time.time()-t0)
 
-        self.train_mask, self.val_mask, self.test_mask = mask
-        self.train_nodes, self.val_nodes, self.test_nodes = nodes
+        self.wce = False
+        self.train_mask, self.val_mask, self.test_mask = None, None, None
+        self.train_nodes, self.val_nodes, self.test_nodes = None, None, None
+        self.config.n_train, self.config.n_val, self.config.n_test, self.config.n_nodes = 0, 0, 0, 0
 
-        self.config.n_train = self.train_nodes.shape[0]
-        self.config.n_val = self.val_nodes.shape[0]
-        self.config.n_test = self.test_nodes.shape[0]
-        self.config.n_nodes = self.adjmat.shape[0]
-
-        # Get Degree
         self.degrees = np.array(self.adjmat.sum(1))
 
         # Some pre processing
@@ -41,8 +38,8 @@ class Dataset:
         self.config.n_nodes, self.config.n_features = self.features.shape
         self.config.n_labels = self.targets.shape[1]
 
-        # self.print_statistics()
-
+    def get_config(self):
+        return self.config
 
     def get_nodes(self, node_class):
         if node_class == 'train':
@@ -62,6 +59,7 @@ class Dataset:
             % (self.config.n_nodes, self.config.n_train, self.config.n_val, self.config.n_test, self.config.n_features, self.config.n_labels, self.config.multilabel, np.max(self.degrees), np.mean(self.degrees)))
         print("Cross-Entropy weights: ", np.round(self.wce, 3))
         print('-----------------------------------------------------\n')
+        print('############### TRAINING STARTS --------- ####################\n\n')
 
     def get_connected_nodes(self, nodes):
         # nodes are list of positions and not mask
@@ -83,6 +81,27 @@ class Dataset:
 
         return np.append(nodes, np.asarray(list(neighbors-set(nodes)), dtype=int))
 
+    def load_indexes(self, percent=10, fold=1):
+        self.config.train_percent = percent
+        self.config.train_fold = fold
+        prefix = path.join(self.config.paths['data'], self.config.label_type, self.config.train_percent, self.config.train_fold)
+        self.test_mask = np.load(path.join(prefix, 'test_ids.npy'))
+        self.train_mask = np.load(path.join(prefix, 'train_ids.npy'))
+        self.val_mask = np.load(path.join(prefix, 'val_ids.npy'))
+
+        self.train_nodes = np.where(self.train_mask)[0]
+        self.val_nodes = np.where(self.val_mask)[0]
+        self.test_nodes = np.where(self.test_mask)[0]
+
+        self.config.n_train = self.train_nodes.shape[0]
+        self.config.n_val = self.val_nodes.shape[0]
+        self.config.n_test = self.test_nodes.shape[0]
+        self.config.n_nodes = self.adjmat.shape[0]
+
+        # Get weights for weighted cross entropy;
+        self.wce = get_wce(self.targets, self.train_mask, self.val_mask, self.config.wce)
+        self.print_statistics()
+
     def load_data(self, config):
 
         # Load features | Attributes
@@ -94,14 +113,14 @@ class Dataset:
         labels = np.load(config.paths['labels'])
 
         # Load train, test and val masks
-        prefix = path.join(config.paths['data'], config.label_type, config.train_percent, config.train_fold)
-        test_mask = np.load(path.join(prefix, 'test_ids.npy'))
-        train_mask = np.load(path.join(prefix, 'train_ids.npy'))
-        val_mask = np.load(path.join(prefix, 'val_ids.npy'))
-
-        train_nodes = np.where(train_mask)[0]
-        val_nodes = np.where(val_mask)[0]
-        test_nodes = np.where(test_mask)[0]
+        # prefix = path.join(config.paths['data'], config.label_type, config.train_percent, config.train_fold)
+        # test_mask = np.load(path.join(prefix, 'test_ids.npy'))
+        # train_mask = np.load(path.join(prefix, 'train_ids.npy'))
+        # val_mask = np.load(path.join(prefix, 'val_ids.npy'))
+        #
+        # train_nodes = np.where(train_mask)[0]
+        # val_nodes = np.where(val_mask)[0]
+        # test_nodes = np.where(test_mask)[0]
 
         # Load adjacency matrix - convert to sparse if not sparse # if not sp.issparse(adj):
         adjmat = sio.loadmat(config.paths['adjmat'])['adjmat']
@@ -125,13 +144,14 @@ class Dataset:
         if not isinstance(adjmat, sp.csr_matrix):
             adjmat = sp.csr_matrix(adjmat)
 
-        # Get weights for weighted cross entropy;
-        wce = get_wce(labels, train_mask, val_mask, config.wce)
+        # # Get weights for weighted cross entropy;
+        # wce = get_wce(labels, train_mask, val_mask, config.wce)
 
         # check whether the dataset has multilabel or multiclass samples
         multilabel = np.sum(labels) > np.shape(labels)[0]
 
-        return adjmat, features, labels, (train_mask, val_mask, test_mask), (train_nodes, val_nodes, test_nodes), wce, multilabel
+        # return adjmat, features, labels, (train_mask, val_mask, test_mask), (train_nodes, val_nodes, test_nodes), wce, multilabel
+        return adjmat, features, labels, multilabel
 
     def get_data(self, data):
         nodes, n_nodes = self.get_nodes(data)

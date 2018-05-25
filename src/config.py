@@ -13,8 +13,8 @@ class Config(object):
 
         # SET UP PATHS
         self.paths = dict()
-        self.paths['root'] = '../'
-        # self.paths['root'] = ''
+        # self.paths['root'] = '../'
+        self.paths['root'] = ''
 
         self.paths['datasets'] = path.join(self.paths['root'], 'Datasets')
         self.paths['experiments'] = path.join(self.paths['root'], 'Experiments')

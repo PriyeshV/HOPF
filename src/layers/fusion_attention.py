@@ -59,7 +59,7 @@ class Fusion(Layer):
         for i in range(self.start_h, self.n_layers):
             context += outputs[i]
         context /= (self.n_layers - self.start_h)
-        context = tf.matmul(context, self.vars['weights_C'])
+        # context = tf.matmul(context, self.vars['weights_C'])
 
         outs = 0
         for i in range(self.start_h, self.n_layers):
@@ -68,7 +68,7 @@ class Fusion(Layer):
             score = tf.nn.tanh(score)
             outs += score*outputs[i]
 
-        outs = tf.matmul(outs/(self.n_layers-self.start_h), self.vars['weights_final'])
+        # outs = tf.matmul(outs/(self.n_layers-self.start_h), self.vars['weights_final'])
         outputs = self.act(outs)
         return outputs
 
@@ -85,6 +85,7 @@ class Fusion(Layer):
         context = 0
         for i in range(self.start_h, self.n_layers):
             context += outputs[i]
+        context /= (self.start_h - self.n_layers)
         context = tf.matmul(context, self.vars['weights_C'])
 
         outs = 0
@@ -96,5 +97,6 @@ class Fusion(Layer):
             outs += score*outputs[i]
 
         outs = tf.matmul(outs / (self.n_layers - self.start_h), self.vars['weights_final'])
+        # outs = tf.matmul(outs, self.vars['weights_final'])
         outputs = self.act(outs)
         return outputs

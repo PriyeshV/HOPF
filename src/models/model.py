@@ -56,6 +56,7 @@ class Model(object):
         for i, layer in enumerate(self.layers):
             hidden = layer(self.data)
 
+            # hidden = self.act[i](hidden)
             if self.skip_conn and (i != self.n_layers and i != 0) and \
                     not (self.name == 'binomial' and i == 1 and self.n_node_features == 0):
                 print('Hop Skip connection| From: ', i, ' To: ', i+1, layer)

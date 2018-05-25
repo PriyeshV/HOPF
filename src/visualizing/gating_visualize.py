@@ -34,8 +34,6 @@ colors = {0:{'r' : 0, 'g' : 0, 'b' : 255},
             10: {'r': 127, 'g': 0, 'b': 127},
             11: {'r': 127, 'g': 127, 'b': 0}}
 
-
-
 for id in range(adjmat.shape[0]):
     # Depth importance based coloring
     # pos = np.argmax(scores[id, :, label])
