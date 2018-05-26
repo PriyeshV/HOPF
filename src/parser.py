@@ -9,19 +9,19 @@ class Parser(object):  #
         parser = argparse.ArgumentParser()
 
         # Node attribute Aggregator
-        parser.add_argument("--propModel", default='binomial_fusion', help='propagation model names',
+        parser.add_argument("--propModel", default='binomial', help='propagation model names',
                             choices=['propagation', 'propagation_fusion', 'krylov1', 'krylov2'
                                      'chebyshev', 'attention', 'binomial', 'binomial_fusion'])
         parser.add_argument("--aggKernel", default='kipf', help="kernel names",
                             choices=['kipf', 'simple', 'chebyshev', 'maxpool', 'add_attention', 'mul_attention'])
         parser.add_argument("--featureless", default=False, help="Non-attributed graphs", type=self.str2bool)
-        parser.add_argument("--node_features", default='h', help="x,h")
+        parser.add_argument("--node_features", default='x', help="x,h")
         parser.add_argument("--neighbor_features", default='h', help="x,h")
-        parser.add_argument("--max_depth", default=3, help="Maximum path depth", type=int)
+        parser.add_argument("--max_depth", default=4, help="Maximum path depth", type=int)
         parser.add_argument("--dims", default='8,8,8,8,8', help="Dimensions of hidden layers: comma separated")
         parser.add_argument("--skip_connections", default=True, help="output layer added", type=self.str2bool)
 
-        parser.add_argument("--shared_weights", default=1, type=int)
+        parser.add_argument("--shared_weights", default=0, type=int)
         parser.add_argument("--bias", default=False, type=self.str2bool)
         parser.add_argument("--sparse_features", default=True, help="For current datasets - manually set in config.py", type=self.str2bool)
 
@@ -42,7 +42,7 @@ class Parser(object):  #
         parser.add_argument("--folds", default='1,2,3,4,5', help="Training folds comma separated")
 
         # NN Hyper parameters
-        parser.add_argument("--batch_size", default=512, help="Batch size", type=int)
+        parser.add_argument("--batch_size", default=128, help="Batch size", type=int)
         parser.add_argument("--wce", default=True, help="Weighted cross entropy", type=self.str2bool)
         parser.add_argument("--lr", default=1e-2, help="Learning rate", type=float)
         parser.add_argument("--l2", default=0., help="L2 loss", type=float)
@@ -53,7 +53,7 @@ class Parser(object):  #
 
         # Training parameters
         parser.add_argument("--retrain", default=False, type=self.str2bool, help="Retrain flag")
-        parser.add_argument("--gpu", default=1, help="GPU BUS ID ", type=int)
+        parser.add_argument("--gpu", default=0, help="GPU BUS ID ", type=int)
         parser.add_argument("--verbose", default=0, help="Verbose mode", type=int, choices=[0, 1, 2])
         parser.add_argument("--save_model", default=False, type=self.str2bool)
 
@@ -70,7 +70,7 @@ class Parser(object):  #
         timestamp = str(now.month) + '|' + str(now.day) + '|' + str(now.hour) + ':' + str(now.minute) + ':' + str(
             now.second)
         parser.add_argument("--timestamp", default=timestamp, help="Timestamp to prefix experiment dumps")
-        parser.add_argument("--folder_suffix", default='Default', help="folder name suffix")
+        parser.add_argument("--folder_suffix", default='ppigs_256_4hops', help="folder name suffix")
 
         # TODO Load saved model and saved argparse
         self.parser = parser

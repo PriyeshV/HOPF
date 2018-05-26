@@ -53,11 +53,12 @@ class Propagation(Model):
     def _build(self):
         # TODO Featureless
         for i in range(self.n_layers):
-            self.layers.append(self.conv_layer(layer_id=i, x_names=self.feature_names, dims=self.dims,
-                                               dropout=self.dropouts[i], act=self.act[i], bias=self.bias,
+            self.layers.append(self.conv_layer(layer_id=i, x_names=self.feature_names, dims=self.dims, bias=self.bias,
+                                               weights=True,
+                                               dropout=self.dropouts[i],
                                                shared_weights=self.shared_weights, nnz_features=self.data['nnz_features'],
                                                sparse_inputs=self.sparse_inputs[i], skip_connection=self.skip_conn,
-                                               add_labels=self.add_labels, logging=self.logging))
+                                               add_labels=self.add_labels, logging=self.logging, model_name=self.name))
         self.layers.append(
             Dense(input_dim=self.dims[-2], output_dim=self.dims[-1], nnz_features=None,
                   dropout=self.dropouts[-1],
