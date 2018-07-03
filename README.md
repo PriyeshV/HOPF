@@ -1,37 +1,163 @@
-# HOPF
+# HOPF: Higher Order Propagation Framework for Deep Collective Classification.
 
-Higher Order Propagation Framework 
+A modular framework for node classification in graphs with node attributes. 
 
-The Frameworks provides different kernels for performing Semi-supervised Node classification.
+#### Paper links
 
-Few Available Kernels: </br>
-1> Graph Convolutional Networks (GCN)  </br>
-2> Node Information Preserving Kernel </br>
-3> Gated GCN </br>
+Vijayan, Priyesh, Yash Chandak, Mitesh M. Khapra, and Balaraman Ravindran. "HOPF: Higher Order Propagation Framework for Deep Collective Classification." arXiv preprint arXiv:1805.12421 (2018). 
 
-Available bases:</br>
-1> Binomial </br>
-    - Supports Node only and Neighbor only baselines </br>
-    - Skip connection supported for Graph Convolutions </br>
-    - Supported kernels: simple | kipf </br> 
-    - Fusion model available: binomial_fusion </br>
-2> Chebyshev </br>
-    - Skip connection internally turned Off (as it will change basis) </br>
-    - Supported kernels: chebyshev (Default internally) </br>
-3> Krylov </br>
-    - Skip connection internally turned Off (as it will change basis) </br>
-    - Supported kernels: simple | kipf (Kipf to be preferred)</br>
+Vijayan, Priyesh, Yash Chandak, Mitesh M. Khapra, and Balaraman Ravindran. "Fusion Graph Convolutional Networks." arXiv preprint arXiv:1805.12528 (2018).
 
-view parser.py to </br>
-1> Specify the kernel </br>
-2> Specify the number of hops </br>
-3> Specify the node and neighbor features </br>
-4> Specify Folds and Percentages to run </br>
-5> Add Skip Connections </br>
-6> Specify Gated GCN Models </br>
-7> Specify Datset, batch size, learning rate, dropout, dimensions </br>
-8> Specify weighted cross entropy loss </br>
-9> Partial Neighborhood </br>
-.. etc </br>
-</br>
-View script_cora.sh and run_cora.py to know how to run multiple kernels in parallel  
+
+#### Installation
+This is a TensorFlow 1.3 implementation written in Python 3.5. <br>
+All required packages to run HOPF is provided in installations.sh
+
+### Contents
+
+The Frameworks provides different kernels for performing Semi-Supervised learning for Node classification.
+
+###### Graph Kernels:
+    1> Graph Convolutional Networks (GCN) Kernel 
+    2> Node Information Preserving Kernel 
+    3> Fusion GCN Kernel
+
+###### Polynomial bases:
+        1> Binomial basis:
+            - Supports Node only and Neighbor only baselines
+            - Skip connection supported for Graph Convolutions 
+            - Supported kernels: simple | kipf 
+            - Fusion model available: binomial_fusion
+        2> Chebyshev basis:
+            - Skip connection internally turned Off (as it will change basis)
+            - Supported kernels: chebyshev (Default internally)
+        3> Krylov basis:
+            - Skip connection internally turned Off (as it will change basis)
+            - Supported kernels: simple | kipf (Kipf to be preferred)
+
+### How to run
+
+You can specify the following model, dataset and training parameters. 
+For choices of arguments and additional parameters refer 'parser.py'.
+
+Model Parameters 
+
+    1> propagation model with 'propModel' (basis)
+    2> graph kernel with 'aggKernel'
+    3> number of hops with 'max_depth'
+    4> node features with 'node_features'
+    5> neighbor features with 'neighbor_features'
+    6> layer dimensions with 'dims'
+    7> skip Connections with 'skip_connectons' 
+    8> shared node and neeighbor weights with 'shared_weights'
+    9> number of HOPF iterations with 'max_outer'
+    10> number of neighbors at each layer with 'neighbors'
+    ...
+
+Dataset details
+    
+    1> dataset directory with 'dataset' 
+    2> labeled percentage with 'percents'
+    3> folds to run with 'folds'
+    ...
+
+Training details
+
+    1> drop learning rate with patience based stopping criteria with 'drop_lr'
+    2> weighted cross entropy loss with 'wce'
+    ...
+    
+
+Usage:
+    cd HOPF/src/
+    export PYTHONPATH='../'
+    python __main__.py --dataset amazon --propModel binomial --aggKernel kipf
+    
+view script_cora.sh and run_cora.py to know how to run multiple kernels in parallel across gpus.  
+
+### Code Structure
+    HOPF/
+    ├── Datasets                               
+    │   ├── amazon
+    │   │   ├── adjmat.mat
+    │   │   ├── features.npy
+    │   │   ├── labels.npy
+    │   │   ├── labels_random
+    │   │   │   ├── 10
+    │   │   │   │   ├── 1
+    │   │   │   │   │   ├── test_ids.npy
+    │   │   │   │   │   ├── train_ids.npy
+    │   │   │   │   │   └── val_ids.npy
+    │   │   │   │   ├── ..
+    │   │       ├── 20
+    │   │       │   ├── ...
+    │   │       ...
+    │   ├── cora
+    │   └── ...
+    ├── Experiments                             # Log and Outputs
+    │   └── 5|10|13:56:18                           # Timestamp
+    │       └── cora                                # Dataset
+    │           └── simple                          # Kernel
+    │               └── Default                     
+    │                   └── 10                      # Labeled %
+    │                       └── 2
+    │                           ├── Checkpoints
+    │                           ├── Embeddings
+    │                           ├── Logs
+    │                           └── Results
+    ├── src                                         # src code
+    │   ├── __main__.py                             # Main Train file
+    │   ├── cells               
+    │   │   └── lstm.py
+    │   ├── config.py
+    │   ├── dataset.py
+    │   ├── layers
+    │   │   ├── batch_norm.py
+    │   │   ├── dense.py
+    │   │   ├── fusion_attention.py
+    │   │   ├── fusion_weighted_sum.py
+    │   │   ├── graph_convolutions
+    │   │   │   ├── chebyshev_kernel.py
+    │   │   │   ├── kernel.py
+    │   │   │   ├── kipf_kernel.py
+    │   │   │   ├── maxpool_kernel.py
+    │   │   │   └── simple_kernel.py
+    │   │   └── layer.py
+    │   ├── losses
+    │   │   └── laplacian_regularizer.py
+    │   ├── models
+    │   │   ├── attention.py
+    │   │   ├── binomial.py
+    │   │   ├── binomial_fusion.py
+    │   │   ├── chebyshev.py
+    │   │   ├── krylov.py
+    │   │   ├── krylov2.py
+    │   │   ├── model.py
+    │   │   ├── model_old.py
+    │   │   ├── propagation.py
+    │   │   └── propagation_fusion.py
+    │   ├── parser.py
+    │   ├── run.py
+    │   ├── run_cora.py
+    │   ├── script_cora.sh
+    │   ├── tabulate_results.py
+    │   └── utils
+    │       ├── inits.py                                # intitalizers
+    │       ├── metrics.py                              # metrics
+    │       ├── utils.py                                # numerous utilaries 
+
+
+
+Code Traversal
+
+
+    parser.py   --- gets arguments
+    config.py   --- loads arguments and sets up working environment
+    dataset.py  --- takes in config and loads dataset
+    __main__.py --- takes in config and dataset objects
+                --- connects TF Queues with dataset objects
+                --- builds a model from 'models'
+                    --- adds layers from 'layers'
+                    --- adds ..
+                --- starts (mini) batch training the model
+               

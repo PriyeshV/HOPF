@@ -14,16 +14,18 @@ class Parser(object):  #
                                      'chebyshev', 'attention', 'binomial', 'binomial_fusion'])
         parser.add_argument("--aggKernel", default='kipf', help="kernel names",
                             choices=['kipf', 'simple', 'chebyshev', 'maxpool', 'add_attention', 'mul_attention'])
-        parser.add_argument("--featureless", default=False, help="Non-attributed graphs", type=self.str2bool)
-        parser.add_argument("--node_features", default='x', help="x,h")
-        parser.add_argument("--neighbor_features", default='h', help="x,h")
         parser.add_argument("--max_depth", default=4, help="Maximum path depth", type=int)
+
+        parser.add_argument("--node_features", default='x', choices=['x', 'h', 'x,h'], help='x for nip connections')
+        parser.add_argument("--neighbor_features", default='h', choices=['x', 'h', 'x,h'])
+
         parser.add_argument("--dims", default='8,8,8,8,8', help="Dimensions of hidden layers: comma separated")
         parser.add_argument("--skip_connections", default=True, help="output layer added", type=self.str2bool)
 
         parser.add_argument("--shared_weights", default=0, type=int)
         parser.add_argument("--bias", default=False, type=self.str2bool)
         parser.add_argument("--sparse_features", default=True, help="For current datasets - manually set in config.py", type=self.str2bool)
+        parser.add_argument("--featureless", default=False, help="Non-attributed graphs", type=self.str2bool)
 
         # Node attributes pertubation
         parser.add_argument("--add_noise", default=0, help="Add noise to input attributes", type=float, choices=np.round(np.arange(0, 1, 0.1),1))
