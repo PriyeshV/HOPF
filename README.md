@@ -69,6 +69,7 @@ Training details
     
 
 Usage:
+
     cd HOPF/src/
     export PYTHONPATH='../'
     python __main__.py --dataset amazon --propModel binomial --aggKernel kipf
