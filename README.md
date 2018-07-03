@@ -74,7 +74,7 @@ Usage:
     export PYTHONPATH='../'
     python __main__.py --dataset amazon --propModel binomial --aggKernel kipf
     
-view script_cora.sh and run_cora.py to know how to run multiple kernels in parallel across gpus.  
+view script_cora.sh and run_cora.py to run multiple kernels in parallel across GPUs.  
 
 ### Code Structure
     HOPF/
