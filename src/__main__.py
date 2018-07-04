@@ -15,9 +15,21 @@ from src.utils.utils import remove_directory
 from src.utils.utils import get_tf_normalize_adj, get_tf_unnormalize_adj
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+"""
+This is the main file to run HOPF
+- 1 class defined: OuterPropagation
+- 2 methods: init_model and dump_results
+"""
 
 class OuterPropagation(object):
-
+    """
+    This class
+        - sets up the input queues
+        - calls the mentioned model assembled with layers
+        - trains the model with iterative learning if specified
+        - predicts ouputs
+        - dumps results
+    """
     def __init__(self, dataset):
         self.config = dataset.config
         self.dataset = dataset
@@ -55,13 +67,13 @@ class OuterPropagation(object):
         self.saver = tf.train.Saver()
         self.summary = tf.summary.merge_all()
 
-        # TODO gather_nd
+        # For Iterative inference
+        # Create TF ops
+        # Update predictions for unlabeled nodes and reassign true lables for labeled nodes
+        # Get test predictions
         if self.config.max_outer_epochs > 1:
-            zero = tf.constant(0, dtype=tf.int32)
-            where = tf.not_equal(self.data['label_mask'], zero)
-            indices = tf.squeeze(tf.where(where), 1)
-            self.update_predictions_op = tf.scatter_update(self.predictions, self.data['labeled_ids'], tf.gather(self.model.predictions, indices))
-            self.update_truth_predictions_op = tf.scatter_update(self.predictions, self.data['labeled_ids'], tf.gather(self.data['targets'], indices))
+            self.update_predictions_op = tf.scatter_update(self.predictions, self.data['labeled_ids'], self.model.predictions)
+            self.update_truth_predictions_op = tf.scatter_update(self.predictions, self.data['labeled_ids'], self.data['targets'])
             self.increment_oe = tf.assign(self.data['outer_epoch'], self.data['outer_epoch']+1)
             self.test_predictions = tf.nn.embedding_lookup(self.predictions, self.data['labeled_ids'], name='curr_labels')
 
@@ -392,8 +404,8 @@ class OuterPropagation(object):
 
                 for i in range(max_o_epochs-1):
                     metric = val_metrics[i]['micro_f1']
-                    if self.config.dataset_name in ['amazon', 'facebook']:
-                        metric = 1 - val_metrics[i]['bae']
+                    # if self.config.dataset_name in ['amazon', 'facebook']:
+                    #     metric = 1 - val_metrics[i]['bae']
                     if best_score <= metric:
                         pos = i
                         best_score = metric
@@ -449,7 +461,7 @@ def init_model(config, dataset):
 
 
 def dump_results(config, i_epoch, tr_metrics, val_metrics, te_metrics):
-    headers = ['O_EPOCH', 'I_EPOCH', 'TR_F1', 'VAL_LOSS', 'VAL_F1', 'k-MICRO-F1', 'k-MACRO-F1', 'MICRO-F1', 'MACRO-F1', 'MC_ACC', 'ML_ACC',  'bae']
+    headers = ['O_EPOCH', 'I_EPOCH', 'TR_LOSS', 'VAL_LOSS', 'VAL_F1', 'k-MICRO-F1', 'k-MACRO-F1', 'MICRO-F1', 'MACRO-F1', 'MC_ACC', 'ML_ACC',  'bae']
     values = []
 
     max_oe = config.max_outer_epochs

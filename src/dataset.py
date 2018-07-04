@@ -1,18 +1,28 @@
 from src.utils.utils import *
-import tensorflow as tf
 import time
 import pickle
 import os.path
 import random
 
-# TODO We should move all numpy data to TF data with device set to CPU
-# Should we remove edges to unlabeled nodes ? That will improve performance
+
+# TODO should move all numpy data to TF data with device set to CPU
+# TODO automatically create inductive setups from transductive data
+# TODO dynamically call mini-batch prefetching codes for partial and complete neighborhood
+
+
 class Dataset:
+    """
+        Helps create a dataset object that will
+        - load dataset
+        - provide dataset statistics
+        - have modules to generate minibatch
+        - add noise | drop edges ..
+    """
+
     def __init__(self, config):
         self.config = config
 
         t0 = time.time()
-        # self.adjmat, features, self.targets, mask, nodes, self.wce, self.config.multilabel = self.load_data(config)
         self.adjmat, features, self.targets, self.config.multilabel = self.load_data(config)
         print("Dataset loaded in: ", time.time()-t0)
 
@@ -23,14 +33,7 @@ class Dataset:
 
         self.degrees = np.array(self.adjmat.sum(1))
 
-        # Some pre processing
-        if self.config.drop_features > 0:
-            n_features = features.shape[1]
-            drop_features = 1 - self.config.drop_features
-            ids = np.random.choice(range(n_features), size=int(n_features * drop_features))
-            features = features[:, ids]
-
-        # TODO Degree log issue
+        # All datasets' feature are sparse inputs and typically 0/1 data except for reddit, which we standardize
         self.features = features
         if self.config.dataset_name != 'reddit' and self.config.dataset_name != 'wiki':
             self.features = preprocess_features(self.features, self.degrees)
@@ -112,16 +115,6 @@ class Dataset:
         # Load labels
         labels = np.load(config.paths['labels'])
 
-        # Load train, test and val masks
-        # prefix = path.join(config.paths['data'], config.label_type, config.train_percent, config.train_fold)
-        # test_mask = np.load(path.join(prefix, 'test_ids.npy'))
-        # train_mask = np.load(path.join(prefix, 'train_ids.npy'))
-        # val_mask = np.load(path.join(prefix, 'val_ids.npy'))
-        #
-        # train_nodes = np.where(train_mask)[0]
-        # val_nodes = np.where(val_mask)[0]
-        # test_nodes = np.where(test_mask)[0]
-
         # Load adjacency matrix - convert to sparse if not sparse # if not sp.issparse(adj):
         adjmat = sio.loadmat(config.paths['adjmat'])['adjmat']
 
@@ -144,13 +137,9 @@ class Dataset:
         if not isinstance(adjmat, sp.csr_matrix):
             adjmat = sp.csr_matrix(adjmat)
 
-        # # Get weights for weighted cross entropy;
-        # wce = get_wce(labels, train_mask, val_mask, config.wce)
-
         # check whether the dataset has multilabel or multiclass samples
         multilabel = np.sum(labels) > np.shape(labels)[0]
 
-        # return adjmat, features, labels, (train_mask, val_mask, test_mask), (train_nodes, val_nodes, test_nodes), wce, multilabel
         return adjmat, features, labels, multilabel
 
     def get_data(self, data):
@@ -169,7 +158,6 @@ class Dataset:
             nodes = np.random.permutation(nodes)
 
         for batch_id in range(n_batches):
-            t0 = time.time()
             start = batch_id * batch_size
             end = np.min([(batch_id+1) * batch_size, n_nodes])
             curr_bsize = end - start
@@ -181,10 +169,12 @@ class Dataset:
             connected_nodes = self.get_connected_nodes(node_ids)
             n_conn_nodes = connected_nodes.shape[0]
 
+            # Get support matrix
             adjmat = self.adjmat[connected_nodes, :].tocsc()[:, connected_nodes]
             if self.config.kernel_name == 'chebyshev':
                 adjmat = get_scaled_laplacian(adjmat)
 
+            # Adjust degree if neighbors are partially sampled
             if all(x == -1 for x in self.config.neighbors):
                 degrees = self.degrees[connected_nodes]
                 degrees = np.squeeze(degrees)
@@ -192,37 +182,16 @@ class Dataset:
                 degrees = adjmat.sum(axis=0)
                 degrees = np.squeeze(np.asarray(degrees))
 
+            # TF Queues does not support sparse matrix, hence we need to pass the indexes, data and shape separately
             adjmat = adjmat.tocoo()
             a_indices = np.mat([adjmat.row, adjmat.col]).transpose()
 
             # Features
-            features = self.features[connected_nodes, :]
-            if not self.config.featureless:
-                if self.config.add_noise > 0:
-                    print('Inside add Noise')
-                    if self.config.sparse_features:
-                        features.data += np.random.normal(0, self.config.add_noise, np.shape(nnz_features))
-                    else:
-                        features += np.random.normal(0, self.config.add_noise, np.shape(features))
-            else:
-                print('Inside drop features')
-                rows = np.array(range(curr_bsize))
-                cols = np.array(range(curr_bsize))
-                data = np.ones(curr_bsize)
-                features = sp.csr_matrix((rows, cols, data), shape=[curr_bsize, self.config.n_nodes])
-                # nnz_features = features.count_nonzero()
+            features = self.features[connected_nodes, :].tocoo()
+            nnz_features = np.array([features.count_nonzero()], dtype=np.int64)
+            f_indices = np.mat([features.row, features.col]).transpose()
 
-            if self.config.sparse_features:
-                nnz_features = np.array([features.count_nonzero()], dtype=np.int64)
-                features = features.tocoo()
-                f_indices = np.mat([features.row, features.col]).transpose()
-                f_shape = features.shape
-                features = features.data
-            else:
-                f_indices = 0
-                nnz_features = 0
-                f_shape = np.shape(features)
-
+            # Targets
             targets = self.targets[node_ids, :]
 
             # Initilaize mask for outputs
@@ -230,6 +199,5 @@ class Dataset:
             mask = np.zeros(n_conn_nodes, dtype=np.bool)
             mask[:curr_bsize] = True
 
-            # print("Batch generated in: ", time.time()-t0)
-            yield mask, degrees, n_conn_nodes, n_node_ids, batch_density, f_indices, features, f_shape, \
+            yield mask, degrees, n_conn_nodes, n_node_ids, batch_density, f_indices, features.data, features.shape, \
                 nnz_features, targets, node_ids, connected_nodes, a_indices, adjmat.data, adjmat.shape

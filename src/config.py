@@ -5,25 +5,27 @@ from os import path
 from src.utils import utils
 import numpy as np
 import importlib
-import os
 
 
 class Config(object):
+    """ Helps create a configuration object which will
+        - contains all arguments from parser
+        - set some additional default configurations """
+
     def __init__(self, args):
 
         # SET UP PATHS
         self.paths = dict()
         self.paths['root'] = '../'
-        # self.paths['root']    = ''
 
         self.paths['datasets'] = path.join(self.paths['root'], 'Datasets')
         self.paths['experiments'] = path.join(self.paths['root'], 'Experiments')
         self.dataset_name = args.dataset
         self.paths['experiment'] = path.join(self.paths['experiments'], args.timestamp, self.dataset_name, args.aggKernel, args.folder_suffix)
+
         # Parse training percentages and folds
         self.train_percents = args.percents.split(',')
         self.train_folds = args.folds.split(',')
-
         for perc in self.train_percents:
             self.paths['perc' + '_' + perc] = path.join(self.paths['experiment'], perc)
             for fold in self.train_folds:
@@ -40,7 +42,6 @@ class Config(object):
                 utils.create_directory_tree(str.split(val, sep='/')[:-1])
 
         dump(args.__dict__, open(path.join(self.paths['experiment'], 'args.yaml'), 'w'), default_flow_style=False, explicit_start=True)
-
         self.paths['data'] = path.join(self.paths['datasets'], self.dataset_name)
         self.paths['labels'] = path.join(path.join(self.paths['data'], 'labels.npy'))
         self.paths['features'] = path.join(path.join(self.paths['data'], 'features.npy'))
@@ -183,7 +184,10 @@ class Config(object):
         self.loss = {}
         self.loss['l2'] = args.l2
 
+        # Featureless
         self.featureless = args.featureless
+
+        # Skip connections
         self.skip_connections = args.skip_connections
 
         if args.shared_weights == 1:
@@ -194,6 +198,7 @@ class Config(object):
             self.shared_weights = False
         self.bias = args.bias
 
+        # Outer (HOPF) iterations for iterative inference
         self.add_labels = False
         if self.max_outer_epochs > 1:
             self.add_labels = True
