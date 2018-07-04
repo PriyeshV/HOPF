@@ -127,7 +127,6 @@ view script_cora.sh and run_cora.py to run multiple kernels in parallel across G
     │   ├── losses
     │   │   └── laplacian_regularizer.py
     │   ├── models
-    │   │   ├── attention.py
     │   │   ├── binomial.py
     │   │   ├── binomial_fusion.py
     │   │   ├── chebyshev.py
