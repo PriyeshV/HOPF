@@ -164,9 +164,9 @@ Code Traversal
                 
 #### Acknowledgements
 
-A large portion of inital version of the code and some of the recent versions of this code was written in colloboration with Yash Chandak (https://yashchandak.github.io/). <br>
+- A large portion of inital version of the code and some of the recent versions of this code was written in colloboration with Yash Chandak (https://yashchandak.github.io/). <br>
 Certain segments of codebase was forked and inspired from Thomas Kipf (https://github.com/tkipf/gcn/).  <br>
-This work was partly supported by a grant from Intel Technology India Pvt. Ltd. to Balaraman Ravindran and Mitesh M. Khapra.
-I also thank my friend, Sandeep Mederametla who provided a considerable amount of AWS credits to support our experiments. 
+- This work was partly supported by a grant from Intel Technology India Pvt. Ltd. to Balaraman Ravindran and Mitesh M. Khapra. <br>
+- I also thank my friend, Sandeep Mederametla who supported us with AWS credits.
 
                
