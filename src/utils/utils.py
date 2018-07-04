@@ -184,20 +184,13 @@ def get_part_symm_laplacian(adj, drows, dcols):
 
 def preprocess_adj(adj):
     """Preprocessing of adjacency matrix for simple GCN model and conversion to tuple representation."""
-    adj_I    = adj + sp.eye(adj.shape[0])
-    # adj_I    = adj
-    # adj_I = normalize_adj(adj + sp.eye(adj.shape[0]))
-    #adj_I = normalize_adj(adj) + sp.eye(adj.shape[0])
-    # return sparse_to_tuple(adj_I)
+    adj_I = adj + sp.eye(adj.shape[0])
     return sp.csr_matrix(adj_I, dtype=np.bool)
 
 
 def preprocess_adj2(adj):
     """Preprocessing of adjacency matrix for simple GCN model and conversion to tuple representation."""
-    # adj_I    = adj + sp.eye(adj.shape[0])
-    # adj_I    = adj
     adj_normalized = get_normalize_adj(adj + sp.eye(adj.shape[0]))
-    #adj_normalized = normalize_adj(adj) + sp.eye(adj.shape[0])
     return adj_normalized
 
 
@@ -205,7 +198,6 @@ def print_Att(message, A1, A2):
     spc = sp.csr_matrix
     A1 = spc((A1.values, (A1.indices[:,0], A1.indices[:,1])), A1.dense_shape)
     A2 = spc((A2.values, (A2.indices[:, 0], A2.indices[:, 1])), A2.dense_shape)
-
     print(message + "\t A1: {}::{} || A2: {}::{}".format(np.mean(spc.min(A1, -1)), np.mean(spc.max(A1, -1)),
                                                          np.mean(spc.min(A2, -1)), np.mean(spc.max(A2, -1))))
 

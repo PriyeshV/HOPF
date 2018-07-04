@@ -3,6 +3,7 @@ from src.layers.layer import Layer
 from src.utils.inits import glorot, const
 from src.utils.utils import sparse_dropout, dot
 
+
 class Kernels_new(Layer):
 
     def __init__(self, layer_id, x_names, dims, dropout, act=tf.nn.relu, nnz_features=None, sparse_inputs=False,

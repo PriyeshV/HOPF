@@ -42,15 +42,15 @@ For choices of arguments and additional parameters refer 'parser.py'.
 
 Model Parameters 
 
-    1> propagation model with 'propModel' (basis)
-    2> graph kernel with 'aggKernel'
-    3> number of hops with 'max_depth'
-    4> node features with 'node_features'
-    5> neighbor features with 'neighbor_features'
+    1> propagation model with 'propModel' | 'propagation' is used in HOPF paper; other basis/models can be chosen  
+    2> graph kernel with 'aggKernel' | 'simple' is used in NIP Kernel
+    3> number of hops with 'max_depth' 
+    4> node features with 'node_features' | 'x' is used in NIP Kernel
+    5> neighbor features with 'neighbor_features' | 'h' is used in NIP Kernel
     6> layer dimensions with 'dims'
     7> skip Connections with 'skip_connectons' 
-    8> shared node and neeighbor weights with 'shared_weights'
-    9> number of HOPF iterations with 'max_outer'
+    8> shared node and neeighbor weights with 'shared_weights' | 0: no shared weights in NIP Kernel
+    9> number of HOPF iterations with 'max_outer' | 5: for I-NIP model
     10> number of neighbors at each layer with 'neighbors'
     ...
 

@@ -67,6 +67,7 @@ class Propagation(Model):
                   sparse_inputs=self.sparse_inputs[-1], logging=self.logging))
 
     def predict(self):
+        # Get predictions only for the nodes of the batch and not all neighbors of these nodes
         predictions = tf.slice(self.outputs, [0, 0], [self.n_node_ids, self.n_labels])
         if self.add_labels:
             prev_predictions = tf.slice(self.prev_pred, [0, 0], [self.n_node_ids, self.n_labels])

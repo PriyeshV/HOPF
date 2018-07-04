@@ -54,7 +54,7 @@ def compute_f1(preds, labels, n_labels, f1_type='micro'):
         axis = None
     else:
         axis = 0
-    tp = tf.count_nonzero(preds * labels, axis=axis, dtype=tf.float32)
+        tp = tf.count_nonzero(preds * labels, axis=axis, dtype=tf.float32)
     # tn = tf.count_nonzero((predictions - 1) * (truth - 1), axjs=axis, dtype=tf.float32)
     fp = tf.count_nonzero(preds * (labels - 1), axis=axis, dtype=tf.float32)
     fn = tf.count_nonzero((preds - 1) * labels, axis=axis, dtype=tf.float32)

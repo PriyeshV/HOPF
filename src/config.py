@@ -185,7 +185,8 @@ class Config(object):
         self.loss['l2'] = args.l2
 
         # Featureless
-        self.featureless = args.featureless
+        self.featureless = None
+        # self.featureless = args.featureless
 
         # Skip connections
         self.skip_connections = args.skip_connections

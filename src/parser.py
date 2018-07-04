@@ -25,7 +25,7 @@ class Parser(object):  #
         parser.add_argument("--shared_weights", default=1, type=int)
         parser.add_argument("--bias", default=False, type=self.str2bool)
         parser.add_argument("--sparse_features", default=True, help="For current datasets - manually set in config.py", type=self.str2bool)
-        parser.add_argument("--featureless", default=False, help="Non-attributed graphs", type=self.str2bool)
+        # parser.add_argument("--featureless", default=False, help="Non-attributed graphs", type=self.str2bool)
 
         # Node attributes pertubation
         parser.add_argument("--add_noise", default=0, help="Add noise to input attributes", type=float, choices=np.round(np.arange(0, 1, 0.1),1))
@@ -60,7 +60,7 @@ class Parser(object):  #
         parser.add_argument("--save_model", default=False, type=self.str2bool)
 
         parser.add_argument("--max_outer", default=3, help="Maximum outer epoch", type=int)
-        parser.add_argument("--max_inner", default=2000, help="Maximum inner epoch", type=int)
+        parser.add_argument("--max_inner", default=70, help="Maximum inner epoch", type=int)
 
         parser.add_argument("--drop_lr", default=True, help="Drop lr with patience drop", type=self.str2bool)
         parser.add_argument("--pat", default=30, help="Patience", type=int)

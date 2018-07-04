@@ -1,7 +1,6 @@
 from src.utils.utils import *
 from src.utils.inits import *
 from src.layers.graph_convolutions.kernel import Kernels_new
-# TODO Chebyshev style
 
 
 class Kernel(Kernels_new):

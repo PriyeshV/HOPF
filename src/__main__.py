@@ -27,7 +27,10 @@ class OuterPropagation(object):
         - sets up the input queues
         - calls the mentioned model assembled with layers
         - trains the model with iterative learning if specified
-        - predicts ouputs
+            - fit_outer() - Iterative learning
+            - fit() - Diffferentiable kernel learning
+            - run_epoch() - run each epoch
+        - predicts outputs
         - dumps results
     """
     def __init__(self, dataset):
@@ -41,8 +44,9 @@ class OuterPropagation(object):
         self.coord = tf.train.Coordinator()
 
         # Setup Architecture
-        self.update_predictions_op = None
+        self.update_predictions_op, self.update_truth_predictions_op, self.increment_op = None, None, None
         self.data = self.model = self.saver = self.summary = None
+        self.test_predictions = None
         self.setup_arch()
 
         # Setup initializers
@@ -68,15 +72,15 @@ class OuterPropagation(object):
         self.summary = tf.summary.merge_all()
 
         # For Iterative inference
-        # Create TF ops
-        # Update predictions for unlabeled nodes and reassign true lables for labeled nodes
-        # Get test predictions
+        # create TF ops for
+        #   updating global predictions for unlabeled nodes and reassigning true labels for labeled nodes
+        # create TF op to get test predictions
+        # labeled_ids is the nodes sampled | at train it will be the labeled nodes otherwise it can be any set of nodes
         if self.config.max_outer_epochs > 1:
             self.update_predictions_op = tf.scatter_update(self.predictions, self.data['labeled_ids'], self.model.predictions)
             self.update_truth_predictions_op = tf.scatter_update(self.predictions, self.data['labeled_ids'], self.data['targets'])
-            self.increment_oe = tf.assign(self.data['outer_epoch'], self.data['outer_epoch']+1)
+            self.increment_op = tf.assign(self.data['outer_epoch'], self.data['outer_epoch']+1)
             self.test_predictions = tf.nn.embedding_lookup(self.predictions, self.data['labeled_ids'], name='curr_labels')
-
 
     def create_tfgraph_data(self):
         data = {}
@@ -112,7 +116,6 @@ class OuterPropagation(object):
         data['max_oe'] = tf.constant(self.config.max_outer_epochs)
 
         # with tf.device("/cpu:0"):
-
         if self.config.add_labels:
             self.predictions = tf.Variable(name='predictions',
                                            initial_value=tf.zeros((self.config.n_nodes, self.config.n_labels), dtype=tf.float32), trainable=False)
@@ -180,9 +183,6 @@ class OuterPropagation(object):
         _, _, _, total_steps = self.dataset.get_data(data)
         for step in range(total_steps):
             shapes = sess.run([self.model.values])
-            # shapes = sess.run([self.model.layers[1].shapes])
-            # print(np.shape(shapes))
-            # print(shapes[1])
             print(np.shape(shapes))
 
     def get_predictions(self, sess, data='test'):
@@ -270,16 +270,32 @@ class OuterPropagation(object):
             metrics['macro_f1'] += t_metrics['macro_f1'] * contrib_ratio
             metrics['bae'] += t_metrics['bae'] * contrib_ratio
             if data == 'test':
+                # Not computing as it is expensive
+                # Top K micro and macro F1 as used in DeepWalk
                 # _, te_metrics = evaluate(preds, labels)
                 te_metrics = {'micro_f1': 0, 'macro_f1': 0}
                 metrics['k_micro_f1'] += te_metrics['micro_f1'] * contrib_ratio
                 metrics['k_macro_f1'] += te_metrics['macro_f1'] * contrib_ratio
 #            print('Epoch: ', epoch_id, ' |  Step: ', step, '/', total_steps):
-
         t.join()
         return metrics
 
     def fit(self, outer_epoch, sess, summary_writers):
+        """
+        differentiable graph kernel fitting
+            - uses patience based stopping criteria and anneals the learning rate if mentioned
+                - checks for average improvement in loss over last best patience number of epochs
+                - by default runs for 'save_after' (parser.py) epochs and saves the model
+                - post 'save_after' epochs: waits for 'pat' (parser.py) epochs and checks whether the loss reduces
+                    - if it reduces it continues training with patience as 'pat' or else activates 'check_for_stop'
+                    - with 'check_for_stop' activated
+                        - it halves the patience
+                        - it drops the learning rate, restores to the last best known model and continues training
+                        - if the loss does not reduce before losing patience, it again drops the learning rate and continues training
+                        - if the loss does not reduce before losing patience again, it stops criteria
+                            - if it reduces it restores the patience to 'pat' and continues training with the reduced learning rate
+                                - saves the model
+        """
         patience = self.config.patience
         best_mean_loss = 1e6
         best_loss = 1e6
@@ -317,7 +333,6 @@ class OuterPropagation(object):
                     curr_mean = np.mean(tot_val[-patience])
                     best_mean_loss = curr_mean
                     self.saver.save(sess, self.config.paths['ckpt' + suffix] + 'inner-last-best')
-                    # print('First save')
                     continue
 
                 if check_for_stop:
@@ -393,17 +408,20 @@ class OuterPropagation(object):
 
                     self.update_global_predictions(sess)
                     self.update_global_predictions_truth(sess, data='train')
-                    sess.run(self.increment_oe)
+                    sess.run(self.increment_op)
 
                 # mean_scores, std_scores = self.get_scores(sess)
                 # print('Scores: mean-', mean_scores, ' std-', std_scores)
 
-            if max_o_epochs > 1:
+            # We return the results from the best iterative inference step
+            # For transductive and transfer learning setups used in this paper we can obtain predictions while doing
+            # iterative learning itself by running the model over all the data
+            # For true inductive setup, a separate inference procedure where all the models are saved is required
+            if self.config.max_outer_epochs > 1:
                 best_score = 0
                 pos = 0
-
                 for i in range(max_o_epochs-1):
-                    metric = val_metrics[i]['micro_f1']
+                    metric = val_metrics[i]['micro_f1'] + val_metrics[i]['macro_f1']
                     # if self.config.dataset_name in ['amazon', 'facebook']:
                     #     metric = 1 - val_metrics[i]['bae']
                     if best_score <= metric:
@@ -433,9 +451,6 @@ def init_model(config, dataset):
     tf.reset_default_graph()
     tf.set_random_seed(1234)
     np.random.seed(1234)
-
-    # Load data
-    # dataset = Dataset(config)
 
     with tf.variable_scope('Graph_Convolutional_Network', reuse=None):
         model = OuterPropagation(dataset)
