@@ -60,6 +60,7 @@ Dataset details
     2> labeled percentage with 'percents'
     3> folds to run with 'folds'
     ...
+    Datasets used in the paper with their train/test/val splits are available in https://bit.ly/2ZxTipS
 
 Training details
 
