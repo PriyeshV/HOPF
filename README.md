@@ -4,9 +4,9 @@ A modular framework for node classification in graphs with node attributes.
 
 #### Paper links
 
-Vijayan, Priyesh, Yash Chandak, Mitesh M. Khapra, and Balaraman Ravindran. "HOPF: Higher Order Propagation Framework for Deep Collective Classification." arXiv preprint arXiv:1805.12421 (2018). 
+Vijayan, Priyesh, Yash Chandak, Mitesh M. Khapra, and Balaraman Ravindran. "HOPF: Higher Order Propagation Framework for Deep Collective Classification." arXiv preprint arXiv:1805.12421 (2018). This work was presented at the 8th workshop on Statistical relational learning for AI (StarAI), IJCAI'18.
 
-Vijayan, Priyesh, Yash Chandak, Mitesh M. Khapra, and Balaraman Ravindran. "Fusion Graph Convolutional Networks." arXiv preprint arXiv:1805.12528 (2018).
+Vijayan, Priyesh, Yash Chandak, Mitesh M. Khapra, and Balaraman Ravindran. "Fusion Graph Convolutional Networks." arXiv preprint arXiv:1805.12528 (2018). This work was presented at the 14th workshop on Mining and Learning with Graphs (MLG), KDD'18.
 
 
 #### Installation
